@@ -1,0 +1,25 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "install:auth": "cd auth && npm install",
+    "install:course": "cd course && npm install",
+    "install:middlewares": "cd middlewares && npm install",
+    "install:gateway": "cd gateway && npm install",
+    "install:user": "cd user && python -m venv venv && venv\\Scripts\\activate && pip install -r requirements.txt",
+    "install:all": "npm-run-all install:auth install:user install:course install:middlewares install:gateway",
+
+    "auth": "node auth/server.js",
+    "course": "node course/server.js",
+
+    "start:all": "npm-run-all --parallel auth user course gateway"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
