@@ -15,16 +15,21 @@ class AuthController {
 
     async login(req, res){
         try {
-            if (!req.email) return res.status(400).json({message: "Email is required!"})
+            const { email, password } = req.body
+            if (!email) return res.status(400).json({message: "Email is required!"})
+
             const user = await UserService.getUserByEmail(email);
             if (!user) return res.status(404).json({message: "User not found!"})
-            const isMatch = await bcrypt.compare(password, hashedPassword);
+
+            console.log(user)
+
+            const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) return res.status(400).json({message: "Wrong Password!"})
             
             const token = generateToken({ uid: user.uid, role: user.role })
             return res.status(200).json({token})
         } catch (error) {
-            return res.status(500).json({message: "Internal Error!"})
+            return res.status(500).json({message: error.message})
         }
     }
 }

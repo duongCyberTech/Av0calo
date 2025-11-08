@@ -29,7 +29,7 @@ class UserService {
     async getUserByEmail(email) {
         try {
             const [user] = await pool.query(`
-                    SELECT uid, fname, lname, username, role, status, phone
+                    SELECT *
                     FROM users
                     WHERE email = ? 
                 `, [email])

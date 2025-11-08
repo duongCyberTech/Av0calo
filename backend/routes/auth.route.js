@@ -4,5 +4,6 @@ const router = express.Router();
 const { validateRegister } = require('../middlewares/validation.middleware')
 
 router.post('/register', validateRegister, AuthController.register)
+router.post('/login', AuthController.login)
 
 module.exports=router
