@@ -44,10 +44,6 @@ const OTP = () => {
     navigate("/signup-success", { state: { email: userEmail } });
   };
 
-  const handleLoginRedirect = () => {
-    navigate("/signup-success", { state: { email: userEmail } });
-  };
-
   return (
     <div className="flex min-h-screen flex-col bg-[#91EAAF] text-gray-700">
       <Nav />
