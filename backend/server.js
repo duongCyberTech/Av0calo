@@ -3,6 +3,11 @@ const cors = require('cors')
 const bodyParser = require('body-parser')
 const authRoute = require('./routes/auth.route')
 const subRoute = require('./routes/subcriptions.route')
+const userRoute = require('./routes/user.route')
+const cartRoute = require('./routes/cart.route')
+const orderRoute = require('./routes/orders.route')
+const shipmentRoute = require('./routes/shipment.route')
+const addressRoute = require('./routes/addresses.route')
 require('dotenv').config()
 
 const app = express()
@@ -17,6 +22,11 @@ app.use(cors({
 
 app.use('/auth', authRoute)
 app.use('/subcriptions', subRoute)
+app.use('/users', userRoute)
+app.use('/cart', cartRoute)
+app.use('/orders', orderRoute)
+app.use('/shipments', shipmentRoute)
+app.use('/addresses', addressRoute)
 
 app.listen(process.env.PORT, () => {
     console.log("Av0Calo server is running on port: ", process.env.PORT)
