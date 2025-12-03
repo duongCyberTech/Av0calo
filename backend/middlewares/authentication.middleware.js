@@ -9,6 +9,7 @@ const authen = (req, res, next) => {
     const decoded = verifyToken(token);
     if (!decoded) return res.status(401).json({ message: 'Invalid token' });
     req.user = decoded
+    console.log('Authenticated user:', req.user);
     next()
 }
 
