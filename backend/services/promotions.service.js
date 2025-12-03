@@ -49,22 +49,18 @@ class PromotionsService {
     }
 
     async discountValue(transaction, promo_id, order_id) {
-        console.log("Cal discountValue promo_id: ", promo_id, "order_id: ", order_id);
         try {
             const [promoRows] = await transaction.query(`
                 SELECT * FROM promotions WHERE promo_id = ?
             `, [promo_id]);
 
             if (promoRows.length === 0) {
-                return { status: 404, message: "Promotion not found" };
+                throw new Error("Promotion not found");
             }
             const promo = promoRows[0];
 
-            console.log("promo: ", promo.promo_id, " discount_for: ", promo.discount_for);
-
             switch (promo.discount_for) {
                 case 'all': {
-                    console.log("Calculating discount for all products");
                     const [products] = await transaction.query(`
                         SELECT p.sell_price, oi.quantity
                         FROM orders_item as oi
@@ -72,15 +68,12 @@ class PromotionsService {
                         WHERE oi.oid = ?
                     `, [order_id]);
                     
-                    console.log("products in order: ", products);
-
                     const totalAmount = products.reduce((sum, item) => sum + item.sell_price * item.quantity, 0);
                 
                     const discount = promo.discount_type === 'percent'
                         ? Math.min(totalAmount * (promo.discount_num / 100), promo.max_discount)
                         : promo.discount_num;              
                     
-                    console.log("discount all: ", discount, " from totalAmount: ", totalAmount);
                     return discount;
                 }
 
@@ -99,14 +92,12 @@ class PromotionsService {
                         ? Math.min(totalAmount * (promo.discount_num / 100), promo.max_discount)
                         : promo.discount_num;
                     
-                    console.log("discount product: ", discount);
                     return discount;
                 }
                 default:
                     return 0;
             }
         } catch (error) {
-            console.error("Error in discountValue: ", error.message);
             return 0;
         } 
     }
@@ -148,7 +139,6 @@ class PromotionsService {
                 }
 
                 const [promos1] = await transaction.query(query, params);
-                console.log("Promos fetched for order_id ", order_id, ": ", promos1);
 
                 params = []
                 params.push(today, today);
@@ -175,11 +165,9 @@ class PromotionsService {
                     // Bước 1: Tính toán song song tất cả discount
                     const computedPromos = await Promise.all(promos.map(async (item) => {
                         const discount = await this.discountValue(transaction, item.promo_id, order_id);
-                        console.log("Computed discount for promo_id ", item.promo_id, ": ", discount);
                         return { ...item, discount: discount || 0 };
                     }));
 
-                    console.log("All computed promos: ", computedPromos);
                     // Bước 2: Lọc và Sắp xếp trên kết quả đã có
                     result = computedPromos
                         .filter(item => item.discount > 0)
