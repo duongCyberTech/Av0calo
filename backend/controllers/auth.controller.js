@@ -1,4 +1,5 @@
 const UserService = require('../services/users.service')
+const AuthService = require('../services/auth.service')
 const bcrypt = require('bcrypt')
 const { generateToken } = require('../utils/jwt')
 
@@ -30,6 +31,35 @@ class AuthController {
             return res.status(200).json({token})
         } catch (error) {
             return res.status(500).json({message: error.message})
+        }
+    }
+
+    async sendOTP(req, res){
+        try {
+            const { email, name } = req.body;
+            if (!email) return res.status(400).json({message: "Email is required!"});
+            const result = await AuthService.sendOTPEmail(email, { name });
+            if (result.success === false) {
+                return res.status(500).json({ message: result.error });
+            }
+            return res.status(200).json({ message: 'OTP sent successfully', info: result.info });
+        } catch (error) {
+            return res.status(500).json({message: error.message});
+        }
+    }
+
+    async verifyOTP(req, res){
+        try {
+            const { email, otp } = req.body;
+            if (!email) return res.status(400).json({message: "Email is required!"});
+            if (!otp) return res.status(400).json({message: "OTP is required!"});
+            const isValid = await AuthService.verifyOTP(email, otp);
+            if (!isValid) {
+                return res.status(400).json({ message: "Invalid OTP!" });
+            }
+            return res.status(200).json({ message: "OTP verified successfully!" });
+        } catch (error) {
+            return res.status(500).json({message: error.message});
         }
     }
 }
