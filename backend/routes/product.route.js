@@ -7,9 +7,19 @@ const { authorize } = require('../middlewares/authorization.middleware');
 
 router.post('/create', authen, authorize(['admin']), ProductController.create);
 
-//router.get("/", ProductController.getAll);
-//router.get("/:id", ProductController.getOne);
-//router.put("/:id", authen, authorize(["admin"]), ProductController.update);
-//router.delete("/:id", authen, authorize(["admin"]), ProductController.delete);
+router.get('/all', ProductController.getAllProducts);
+router.get('/:pid', ProductController.getDetailProduct);
+router.put(
+  '/:pid',
+  authen,
+  authorize(['admin']),
+  ProductController.updateProduct
+);
+router.delete(
+  '/:pid',
+  authen,
+  authorize(['admin']),
+  ProductController.deleteProduct
+);
 
 module.exports = router;

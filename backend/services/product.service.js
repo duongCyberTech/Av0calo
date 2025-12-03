@@ -28,6 +28,7 @@ class ProductService {
         );
       }
       const pid = uuid();
+      //deleted default 0 nên không cần thêm
       const queryProduct = `INSERT INTO products(pid, title, description, stock, sold, cost, sell_price, rating, size, unit, cate_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
       await connection.query(queryProduct, [
         pid,
@@ -53,7 +54,7 @@ class ProductService {
       //ghi log
       if (uid) {
         await connection.query(
-          `INSERT INTO product_management (admin_id, pid, modify_at) VALUES (?, ?, NOW())`,
+          `INSERT INTO product_management (admin_id, pid, modify_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 7 HOUR))`,
           [uid, pid]
         );
       }
@@ -66,6 +67,139 @@ class ProductService {
     } finally {
       connection.release();
     }
+  }
+  //Read
+  async getAllProducts() {
+    try {
+      const query = `
+        SELECT 
+          p.*, 
+          c.cate_name,
+          (SELECT img_url FROM img WHERE pid = p.pid LIMIT 1) as thumbnail
+        FROM products p
+        LEFT JOIN categories c ON p.cate_id = c.cate_id
+        WHERE p.deleted <> 1
+        ORDER BY p.pid DESC
+      `;
+      const [products] = await pool.query(query);
+      return products;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  async getDetailProduct(pid) {
+    try {
+      const [rows] = await pool.query(
+        `SELECT p.*, c.cate_name 
+         FROM products p
+         LEFT JOIN categories c ON p.cate_id = c.cate_id
+         WHERE p.pid = ? AND p.deleted <> 1`,
+        [pid]
+      );
+
+      if (rows.length === 0) return null;
+
+      const product = rows[0];
+      const [imageRows] = await pool.query(
+        `SELECT img_url FROM img WHERE pid = ?`,
+        [pid]
+      );
+
+      product.images = imageRows.map((item) => item.img_url);
+
+      return product;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+  //update
+  async updateProduct(pid, uid, data) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [check] = await connection.query(
+        `SELECT pid FROM products WHERE pid = ?`,
+        [pid]
+      );
+      if (check.length === 0) {
+        throw new Error('Sản phẩm không tồn tại!');
+      }
+
+      const {
+        title,
+        description,
+        stock,
+        cost,
+        sell_price,
+        rating,
+        size,
+        unit,
+        cate_id,
+        images,
+        deleted,
+      } = data;
+
+      const updateQuery = `
+        UPDATE products 
+        SET 
+          title = COALESCE(?, title),
+          description = COALESCE(?, description),
+          stock = COALESCE(?, stock),
+          cost = COALESCE(?, cost),
+          sell_price = COALESCE(?, sell_price),
+          rating = COALESCE(?, rating),
+          size = COALESCE(?, size),
+          unit = COALESCE(?, unit),
+          cate_id = COALESCE(?, cate_id),
+          deleted = COALESCE(?, deleted)
+        WHERE pid = ?
+      `;
+
+      await connection.query(updateQuery, [
+        title,
+        description,
+        stock,
+        cost,
+        sell_price,
+        rating,
+        size,
+        unit,
+        cate_id,
+        deleted,
+        pid,
+      ]);
+
+      if (images && Array.isArray(images) && images.length > 0) {
+        await connection.query(`DELETE FROM img WHERE pid = ?`, [pid]);
+
+        const imageValues = images.map((url, index) => [pid, index + 1, url]);
+        await connection.query(`INSERT INTO img (pid, iid, img_url) VALUES ?`, [
+          imageValues,
+        ]);
+      }
+
+      //ghi log
+      if (uid) {
+        await connection.query(
+          `UPDATE product_management SET modify_at = DATE_ADD(NOW(), INTERVAL 7 HOUR)
+          WHERE pid = ? AND admin_id = ?`,
+          [pid, uid]
+        );
+      }
+
+      await connection.commit();
+      return { message: 'Cập nhật sản phẩm thành công!' };
+    } catch (error) {
+      await connection.rollback();
+      throw new Error(error.message);
+    } finally {
+      connection.release();
+    }
+  }
+
+  async deleteProduct(pid, uid) {
+    return this.updateProduct(pid, uid, { deleted: '1' });
   }
 }
 
