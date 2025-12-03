@@ -1,0 +1,56 @@
+{
+  // ---------------------------
+  // FORMATTER CONFIG
+  // ---------------------------
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+
+  // ---------------------------
+  // PRETTIER
+  // ---------------------------
+  "prettier.enable": true,
+  "prettier.useEditorConfig": true,
+  "prettier.printWidth": 100,
+  "prettier.singleQuote": false,
+  "prettier.trailingComma": "none",
+  "prettier.tabWidth": 2,
+  "prettier.semi": true,
+
+  // Đảm bảo Prettier load plugin TailwindCSS
+  "prettier.pluginSearchDirs": [
+    "./",
+    "./frontend",
+    "node_modules"
+  ],
+
+  // ---------------------------
+  // TAILWINDCSS
+  // ---------------------------
+  "tailwindCSS.emmetCompletions": true,
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+
+  // ---------------------------
+  // JAVASCRIPT / JSX
+  // ---------------------------
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "javascript.suggest.autoImports": true,
+
+  // ---------------------------
+  // FILES
+  // ---------------------------
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "files.autoSave": "off",
+
+  // ---------------------------
+  // TERMINAL
+  // ----------------
