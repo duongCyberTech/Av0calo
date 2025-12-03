@@ -1,6 +1,6 @@
 const pool = require("../config/db");
 const { v4: uuidv4 } = require("uuid");
-
+const PromotionsService = require('./promotions.service');
 class OrderService {
   async createOrder(uid, data) {
     const {
@@ -8,6 +8,7 @@ class OrderService {
       ship_id,
       pay_type, // cash or online
       note,
+      promo_id,
     } = data;
 
     const connection = await pool.getConnection();
@@ -46,7 +47,7 @@ class OrderService {
         }
         totalPrice += Number(item.sell_price) * item.quantity;
       }
-      const finalPrice = totalPrice + shippingFee;
+      let finalPrice = totalPrice + shippingFee;
       const oid = uuidv4();
       const orderTitle = `ORD-${Date.now().toString().slice(-6)}`;
       await connection.execute(
@@ -65,8 +66,8 @@ class OrderService {
           oid,
           orderTitle,
           note,
-          pay_type,
           isPaidValue,
+          pay_type,
           totalPrice,
           finalPrice,
           shippingFee,
@@ -85,6 +86,21 @@ class OrderService {
           [item.quantity, item.quantity, item.pid]
         );
       }
+      let discountAmount = 0;
+      if (promo_id) {
+          discountAmount = await PromotionsService.discountValue(connection, promo_id, oid);
+          if (discountAmount > 0) {
+              finalPrice = Math.max(0, finalPrice - discountAmount); 
+              await connection.execute(
+                  `UPDATE orders SET final_price = ? WHERE oid = ?`, 
+                  [finalPrice, oid]
+              );
+              await connection.execute(
+                  `UPDATE promotions SET used = used + 1 WHERE promo_id = ?`,
+                  [promo_id]
+              );
+          }
+      }
       await connection.execute(`DELETE FROM cart WHERE uid = ?`, [uid]);
 
       await connection.commit();
@@ -92,6 +108,7 @@ class OrderService {
         oid,
         title: orderTitle,
         final_price: finalPrice,
+        discount: discountAmount,
         message: "Đặt hàng thành công",
       };
     } catch (error) {
