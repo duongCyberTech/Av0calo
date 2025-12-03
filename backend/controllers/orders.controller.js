@@ -4,7 +4,7 @@ class OrderController {
   async createOrder(req, res) {
     try {
       const uid = req.user.uid;
-      const { aid, ship_id, pay_type, note } = req.body;
+      const { aid, ship_id, pay_type, note, promo_id } = req.body;
 
       if (!aid)
         return res.status(400).json({ message: "Thiếu ID địa chỉ (aid)" });
@@ -18,6 +18,7 @@ class OrderController {
         ship_id,
         pay_type,
         note,
+        promo_id
       });
 
       return res.status(200).json(result);
