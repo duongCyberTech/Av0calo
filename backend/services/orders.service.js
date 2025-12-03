@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require("uuid");
 const PromotionsService = require('./promotions.service');
 class OrderService {
   async createOrder(uid, data) {
+    console.log(uid)
     const {
       aid,
       ship_id,
@@ -32,6 +33,7 @@ class OrderService {
         `SELECT aid FROM addresses WHERE aid = ? AND uid = ?`,
         [aid, uid]
       );
+      console.log(checkAddr)
       if (checkAddr.length === 0) throw new Error("Địa chỉ không hợp lệ");
 
       const [cartItems] = await connection.query(
@@ -88,7 +90,8 @@ class OrderService {
       }
       let discountAmount = 0;
       if (promo_id) {
-          discountAmount = await PromotionsService.discountValue(connection, promo_id, oid);
+          const {discount} = await PromotionsService.discountValue(connection, promo_id, oid);
+          discountAmount = discount;
           if (discountAmount > 0) {
               finalPrice = Math.max(0, finalPrice - discountAmount); 
               await connection.execute(
