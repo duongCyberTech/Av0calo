@@ -68,13 +68,13 @@ class PromotionsService {
                         WHERE oi.oid = ?
                     `, [order_id]);
                     
-                    const totalAmount = products.reduce((sum, item) => sum + item.sell_price * item.quantity, 0);
+                    const totalAmount = products.reduce((sum, item) => sum + Number(item.sell_price) * Number(item.quantity), 0);
                 
                     const discount = promo.discount_type === 'percent'
-                        ? Math.min(totalAmount * (promo.discount_num / 100), promo.max_discount)
-                        : promo.discount_num;              
+                        ? Math.min(totalAmount * (Number(promo.discount_num) / 100), Number(promo.max_discount))
+                        : Number(promo.discount_num);              
                     
-                    return discount;
+                    return {discount, totalAmount};
                 }
 
                 case 'product': {
@@ -86,13 +86,13 @@ class PromotionsService {
                         JOIN products p ON oi.pid = p.pid
                         WHERE o.oid = ? AND pap.promo_id = ?
                     `, [order_id, promo_id]);
-                    const totalAmount = products.reduce((sum, item) => sum + item.sell_price * item.quantity, 0);
-
+                    const totalAmount = products.reduce((sum, item) => sum + Number(item.sell_price) * Number(item.quantity), 0);
+                
                     const discount = promo.discount_type === 'percent'
-                        ? Math.min(totalAmount * (promo.discount_num / 100), promo.max_discount)
-                        : promo.discount_num;
+                        ? Math.min(totalAmount * (Number(promo.discount_num) / 100), Number(promo.max_discount))
+                        : Number(promo.discount_num);    
                     
-                    return discount;
+                    return {discount, totalAmount};
                 }
                 default:
                     return 0;
@@ -164,8 +164,8 @@ class PromotionsService {
                 if (promos && promos.length > 0) {
                     // Bước 1: Tính toán song song tất cả discount
                     const computedPromos = await Promise.all(promos.map(async (item) => {
-                        const discount = await this.discountValue(transaction, item.promo_id, order_id);
-                        return { ...item, discount: discount || 0 };
+                        const {discount, totalAmount} = await this.discountValue(transaction, item.promo_id, order_id);
+                        return { ...item, discount: discount || 0, totalAmount: totalAmount || 0 };
                     }));
 
                     // Bước 2: Lọc và Sắp xếp trên kết quả đã có
