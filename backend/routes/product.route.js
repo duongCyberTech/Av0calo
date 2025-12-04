@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ProductController = require('../controllers/product.controller');
-const uploadCloud = require('../config/cloudinary');
+const {uploadCloud} = require('../config/cloudinary');
 const { authen } = require('../middlewares/authentication.middleware');
 const { authorize } = require('../middlewares/authorization.middleware');
 

@@ -1,7 +1,6 @@
 const pool = require('../config/db');
 const { uuidv7: uuid } = require('uuidv7');
-const { checkExist } = require('../utils/utils');
-
+const {cloudinary} = require('../config/cloudinary')
 class ProductService {
   //Create
   async CreatProduct(data, uid) {
@@ -45,7 +44,7 @@ class ProductService {
       ]);
       // insert ảnh vào
       if (images && images.length > 0) {
-        const imageValues = images.map((url, index) => [pid, index + 1, url]);
+        const imageValues = images.map((url) => [pid, uuid(), url]);
 
         await connection.query(`INSERT INTO img (pid, iid, img_url) VALUES ?`, [
           imageValues,
@@ -113,6 +112,16 @@ class ProductService {
     }
   }
   //update
+  getPublicIdFromUrl(url) {
+    try {
+      const regex = /\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/;
+      const match = url.match(regex);
+      return match ? match[1] : null; 
+    } catch (error) {
+      console.error("Lỗi tách public_id:", error);
+      return null;
+    }
+  }
   async updateProduct(pid, uid, data) {
     const connection = await pool.getConnection();
     try {
@@ -171,12 +180,22 @@ class ProductService {
       ]);
 
       if (images && Array.isArray(images) && images.length > 0) {
+        const [oldImages] = await connection.query(`SELECT img_url FROM img WHERE pid = ?`, [pid]);
+
+        if (oldImages.length > 0) {
+          for (const img of oldImages) {
+            const publicId = this.getPublicIdFromUrl(img.img_url);
+            if (publicId) {
+              // Gọi lệnh xóa của Cloudinary
+              cloudinary.uploader.destroy(publicId);
+            }
+          }
+        }
         await connection.query(`DELETE FROM img WHERE pid = ?`, [pid]);
 
-        const imageValues = images.map((url, index) => [pid, index + 1, url]);
-        await connection.query(`INSERT INTO img (pid, iid, img_url) VALUES ?`, [
-          imageValues,
-        ]);
+        // Thêm ảnh vào DB
+        const imageValues = images.map((url) => [pid, uuid(), url]);
+        await connection.query(`INSERT INTO img (pid, iid, img_url) VALUES ?`, [imageValues]);
       }
 
       //ghi log
