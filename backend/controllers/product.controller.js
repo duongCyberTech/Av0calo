@@ -5,8 +5,13 @@ class ProductController {
   async create(req, res) {
     try {
       const uid = req.user.uid;
-      // Gọi Service
-      const result = await ProductService.CreatProduct(req.body, uid);
+      // xử lý ảnh
+      let imageUrls = [];
+      if (req.files && req.files.length > 0) {
+        imageUrls = req.files.map(file => file.path);
+      }
+      const productdata = {...req.body, images : imageUrls};
+      const result = await ProductService.CreatProduct(productdata, uid);
 
       res.status(201).json({
         success: true,
@@ -47,10 +52,16 @@ class ProductController {
 
   async updateProduct(req, res) {
     try {
+
+      let imageUrls = [];
+      if (req.files && req.files.length > 0) {
+        imageUrls = req.files.map(file => file.path);
+      }
+      const productdata = {...req.body, ...(imageUrls.length > 0 && { images: imageUrls })};
       const result = await ProductService.updateProduct(
         req.params.pid,
         req.user.uid,
-        req.body
+        productdata
       );
       if (!result) {
         return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
