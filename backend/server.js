@@ -10,6 +10,7 @@ const shipmentRoute = require('./routes/shipment.route');
 const addressRoute = require('./routes/addresses.route');
 const promotionsRoute = require('./routes/promotions.route');
 const productRoute = require('./routes/product.route');
+const paymentRoute = require('./routes/payment.route')
 require('dotenv').config();
 
 const app = express();
@@ -33,6 +34,7 @@ app.use('/shipments', shipmentRoute);
 app.use('/addresses', addressRoute);
 app.use('/promotions', promotionsRoute);
 app.use('/products', productRoute);
+app.use('/payment', paymentRoute);
 
 app.listen(process.env.PORT, () => {
   console.log('Av0Calo server is running on port: ', process.env.PORT);
