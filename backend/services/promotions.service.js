@@ -122,13 +122,13 @@ class PromotionsService {
                     JOIN products as p ON oi.pid = p.pid
                     JOIN promo_apply_product as pap ON p.pid = pap.pid
                     JOIN promotions as pr ON pap.promo_id = pr.promo_id
-                    WHERE (o.oid = ? AND pr.start_date <= ? AND pr.expire_date >= ?`;
+                    WHERE (o.oid = ? AND pr.start_date <= ? AND pr.expire_date >= ? AND pr.stock > 0`;
                 if (search) {
                     query += ` AND pr.title LIKE ?`;
                     params.push(`%${search}%`);
                 }
 
-                query += `) OR (pr.discount_for = 'all' AND pr.start_date <= ? AND pr.expire_date >= ?)`;
+                query += `) OR (pr.discount_for = 'all' AND pr.start_date <= ? AND pr.expire_date >= ? AND pr.stock > 0)`;
                 params.push(today, today);
 
                 query += ` GROUP BY pr.promo_id `;
@@ -145,7 +145,7 @@ class PromotionsService {
                 query = `
                     SELECT * 
                     FROM promotions 
-                    WHERE start_date <= ? AND expire_date >= ?`;
+                    WHERE start_date <= ? AND expire_date >= ? pr.stock > 0`;
                 
                 if (search) {
                     query += ` AND title LIKE ?`;

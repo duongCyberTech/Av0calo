@@ -24,6 +24,12 @@ class PaymentService {
 
     const amount = order.final_price;
 
+    return this.createTransaction(oid, amount, bankCode, language)
+  }
+
+  async createTransaction(oid, amount, bankCode, language = 'vn') {
+    if (!bankCode) throw new Error("INFO_MISSED")
+
     let date = new Date();
     let createDate = moment(date).format('YYYYMMDDHHmmss');
     let expireDate = moment(date).add(10, 'minutes').format('YYYYMMDDHHmmss');
@@ -55,6 +61,7 @@ class PaymentService {
     vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
     return vnpUrl;
   }
+
   async verifyReturn(vnp_Params) {
     let secureHash = vnp_Params['vnp_SecureHash'];
     let secretKey = process.env.vnp_HashSecret;

@@ -1,6 +1,7 @@
 const pool = require('../config/db')
 const { uuidv7: uuid } = require('uuidv7')
 const { checkExist } = require('../utils/utils')
+const PaymentService = require('../services/payment.service')
 
 class SubcriptionService {
     async createSubcription(data) {
@@ -54,6 +55,26 @@ class SubcriptionService {
             `, duration ? [duration] : []
             )
             return subs
+        } catch (error) {
+            throw new Error(error.message)
+        }
+    }
+
+    async payForSubcription(uid, sub_id, bankCode = "NCB") {
+        try {
+            const [subs] = await pool.query(`
+                SELECT price FROM subcriptions
+                WHERE sub_id = ?
+            `,[sub_id]) 
+
+            if (subs.length <= 0) return {status: 400, message: "Subcription Pack not exist!"}
+            
+            const price = subs[0].price
+
+            console.log(price)
+            
+            const trans = await PaymentService.createTransaction(`${uid}_${sub_id}`, price, bankCode)
+            return {status: 200, url: trans}
         } catch (error) {
             throw new Error(error.message)
         }

@@ -11,6 +11,7 @@ router.get('/', SubcriptionController.getAllSubs)
 router.patch('/:sub_id', authorize(['admin']), SubcriptionController.updateSubcription)
 router.get('/:sub_id', SubcriptionController.getSubcriptionById)
 router.get('/user/me', SubcriptionController.getUserSubcriptions)
+router.post('/pay/:sub_id', authorize(['customer']), SubcriptionController.pay)
 router.post('/subscribe/:sub_id', authorize(['customer']), SubcriptionController.subscribe)
 
 module.exports=router

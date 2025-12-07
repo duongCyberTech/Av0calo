@@ -1,4 +1,5 @@
 const SubcriptionService = require('../services/subcriptions.service')
+const PaymentService =  require('../services/payment.service')
 
 class SubcriptionController {
     async createSub(req, res){
@@ -58,9 +59,28 @@ class SubcriptionController {
         try {
             const uid = req.user.uid
             const { sub_id } = req.params
-            const newSub = await SubcriptionService.registerSubcription(uid, sub_id)
-            if (!newSub) return res.status(400).json({message: "Subscribe Fail!"})
-            return res.status(201).json({...newSub})
+            const vnp_Params = req.query
+            if (!vnp_Params) return res.status(400).json({message: "Subcribe fail!"})
+            const result = await PaymentService.verifyReturn(vnp_Params)
+            if (result.isSuccess){
+                const newSub = await SubcriptionService.registerSubcription(uid, sub_id)
+                if (!newSub) return res.status(400).json({message: "Subscribe Fail!"})
+                return res.status(201).json({...newSub})
+            }
+            return res.status(400).json({message: "Subcribe fail!"})
+        } catch (error) {
+            return res.status(500).json({message: error.message})
+        }
+    }
+
+    async pay(req, res) {
+        try {
+            const uid = req.user.uid
+            const { sub_id } = req.params
+
+            const payingSub = await SubcriptionService.payForSubcription(uid, sub_id)
+
+            return res.status(payingSub.status).json({url: payingSub.url})
         } catch (error) {
             return res.status(500).json({message: error.message})
         }
