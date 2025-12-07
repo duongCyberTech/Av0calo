@@ -24,8 +24,8 @@ const Nav = () => {
           <NavLink to="/product" className={navLinkStyle}>Sản phẩm</NavLink>
           <NavLink to="/subscription" className={navLinkStyle}>Gói đăng ký</NavLink>
           {/* Nút đăng ký/đăng nhập nếu cần */}
-          <NavLink to="/register" className="ml-4 bg-[#2E4A26] text-white px-4 py-2 rounded-full hover:bg-black transition">
-            Đăng ký
+          <NavLink to="/signup" className="ml-4 bg-[#2E4A26] text-white px-4 py-2 rounded-full hover:bg-black transition">
+             Đăng ký
           </NavLink>
         </div>
 
@@ -43,7 +43,7 @@ const Nav = () => {
           <NavLink to="/" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">Trang chủ</NavLink>
           <NavLink to="/product" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">Sản phẩm</NavLink>
           <NavLink to="/subscription" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">Gói đăng ký</NavLink>
-          <NavLink to="/signup" onClick={toggleNavbar} className="bg-[#2E4A26] text-white px-6 py-2 rounded-full">Đăng ký</NavLink>
+           <NavLink to="/signup" onClick={toggleNavbar} className="bg-[#2E4A26] text-white px-6 py-2 rounded-full">Đăng ký</NavLink>
         </div>
       )}
     </>

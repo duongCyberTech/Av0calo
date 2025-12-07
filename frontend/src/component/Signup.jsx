@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
 import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
-import { fetchJSON } from '../utils/api';
-
 const SignUp = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    fname: '',
-    lname: '',
-    username: '',
+    fullName: '',
     email: '',
     phone: '',
     password: '',
+    interest: 'lose-weight',
     agreeTerms: false,
   });
 
@@ -24,56 +19,21 @@ const SignUp = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
+    console.log('Form submitted:', formData);
+    navigate('/otp-signup', { state: { email: formData.email } });
 
-    if (!formData.agreeTerms) {
-      setError('Bạn phải đồng ý với điều khoản');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const result = await fetchJSON('/auth/register', {
-        method: 'POST',
-        body: {
-          fname: formData.fname,
-          lname: formData.lname,
-          username: formData.username,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-        },
-      });
-      console.log('register result:', result);
-
-      // điều hướng tới OTP
-      navigate('/otp-signup', { state: { email: formData.email } });
-    } catch (err) {
-      console.error('register error:', err);
-
-      // Xử lý lỗi validation từ backend
-      let errorMsg = `Lỗi đăng ký (${err.status})`;
-      if (err.body?.errors && Array.isArray(err.body.errors)) {
-        errorMsg = err.body.errors.map(e => e.msg).join('; ');
-      } else if (err.body?.message) {
-        errorMsg = err.body.message;
-      }
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
     <div className="bg-[#91EAAF] text-gray-700 min-h-screen flex flex-col">
+      <Nav />
 
       <div className="flex-grow flex items-center justify-center py-12 px-8 sm:px-6 lg:px-8 relative">
+
         <div className="flex-center w-[704px] h-auto space-y-2 items-center bg-white p-8 rounded-2xl relative z-10 border border-black">
           <div className="text-center">
             <h2 className="mt-2 text-[48px] text-black">
@@ -85,69 +45,23 @@ const SignUp = () => {
             <div className="flex-grow border-t border-black"></div>
           </div>
 
-          {error && (
-            <div className="px-3 py-2 text-red-600 text-center bg-red-100 rounded-lg w-full text-sm">
-              {error}
-            </div>
-          )}
-
-          <form className="mt-8 space-y-6 w-full" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-5 rounded-md shadow-sm px-3 -space-y-px text-[20px]">
-              {/* First Name */}
+              {/* Full Name */}
               <div>
-                <div className="flex justify-between items-center gap-2 px-5">
-                  <label htmlFor="fname" className="block font-extralight text-black mb-1">Tên (*)</label>
-                  <i className="fa-solid fa-user"></i>
+                <div className='flex justify-between items-center gap-2 px-5'>
+                  <label htmlFor="fullName" className="block font-extralight text-black mb-1">Tên người dùng (*)</label>
+                  <i class="fa-solid fa-user"></i>
                 </div>
                 <div className="relative">
                   <input
-                    id="fname"
-                    name="fname"
+                    id="fullName"
+                    name="fullName"
                     type="text"
                     required
                     className="bg-[#F1F8E9] appearance-none rounded-xl relative block w-full px-3 py-3 pl-5 font-extralight placeholder-[#9E9E9E] text-black focus:outline-none focus:ring-[#A8D08D] focus:border-[#A8D08D] focus:z-10 transition-colors"
-                    placeholder="Ví dụ: Văn"
-                    value={formData.fname}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Last Name */}
-              <div>
-                <div className="flex justify-between items-center gap-2 px-5">
-                  <label htmlFor="lname" className="block font-extralight text-black mb-1">Họ (*)</label>
-                  <i className="fa-solid fa-user"></i>
-                </div>
-                <div className="relative">
-                  <input
-                    id="lname"
-                    name="lname"
-                    type="text"
-                    required
-                    className="bg-[#F1F8E9] appearance-none rounded-xl relative block w-full px-3 py-3 pl-5 font-extralight placeholder-[#9E9E9E] text-black focus:outline-none focus:ring-[#A8D08D] focus:border-[#A8D08D] focus:z-10 transition-colors"
-                    placeholder="Ví dụ: Nguyễn"
-                    value={formData.lname}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-
-              {/* Username */}
-              <div>
-                <div className="flex justify-between items-center gap-2 px-5">
-                  <label htmlFor="username" className="block font-extralight text-black mb-1">Tên đăng nhập (*)</label>
-                  <i className="fa-solid fa-at"></i>
-                </div>
-                <div className="relative">
-                  <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    required
-                    className="bg-[#F1F8E9] appearance-none rounded-xl relative block w-full px-3 py-3 pl-5 font-extralight placeholder-[#9E9E9E] text-black focus:outline-none focus:ring-[#A8D08D] focus:border-[#A8D08D] focus:z-10 transition-colors"
-                    placeholder="username123"
-                    value={formData.username}
+                    placeholder="Nguyễn Văn A"
+                    value={formData.fullName}
                     onChange={handleChange}
                   />
                 </div>
@@ -155,9 +69,9 @@ const SignUp = () => {
 
               {/* Email */}
               <div>
-                <div className="flex justify-between items-center gap-2 px-5">
+                <div className='flex justify-between items-center gap-2 px-5'>
                   <label htmlFor="email" className="block font-extralight text-black mb-1">Email (*)</label>
-                  <i className="fa-solid fa-envelope"></i>
+                  <i class="fa-solid fa-envelope"></i>
                 </div>
                 <div className="relative">
                   <input
@@ -166,7 +80,7 @@ const SignUp = () => {
                     type="email"
                     required
                     className="bg-[#F1F8E9] appearance-none rounded-xl relative block w-full px-3 py-3 pl-5 font-extralight placeholder-[#9E9E9E] text-black focus:outline-none focus:ring-[#A8D08D] focus:border-[#A8D08D] focus:z-10 transition-colors"
-                    placeholder="example@email.com"
+                    placeholder="Bachkhoatuiiu@hcmut.edu.vn"
                     value={formData.email}
                     onChange={handleChange}
                   />
@@ -175,7 +89,7 @@ const SignUp = () => {
 
               {/* Password */}
               <div>
-                <div className="flex justify-between items-center gap-2 px-5">
+                <div className='flex justify-between items-center gap-2 px-5'>
                   <label htmlFor="password" className="block font-extralight text-black mb-1">Mật khẩu (*)</label>
                   <i className="fas fa-lock text-black text-gray-600"></i>
                 </div>
@@ -195,15 +109,16 @@ const SignUp = () => {
 
               {/* Phone */}
               <div>
-                <div className="flex justify-between items-center gap-2 px-5">
-                  <label htmlFor="phone" className="block font-extralight text-black mb-1">SĐT</label>
-                  <i className="fa-solid fa-phone-flip text-gray-600"></i>
+                <div className='flex justify-between items-center gap-2 px-5'>
+                  <label htmlFor="phone" className="block font-extralight text-black mb-1">SĐT (*)</label>
+                  <i class="fa-solid fa-phone-flip text-gray-600"></i>
                 </div>
                 <div className="relative">
                   <input
                     id="phone"
                     name="phone"
                     type="tel"
+                    required
                     className="bg-[#F1F8E9] appearance-none rounded-xl relative block w-full px-3 py-3 pl-5 font-extralight placeholder-[#9E9E9E] text-black focus:outline-none focus:ring-[#A8D08D] focus:border-[#A8D08D] focus:z-10 transition-colors"
                     placeholder="0123 456 789"
                     value={formData.phone}
@@ -228,19 +143,18 @@ const SignUp = () => {
               </label>
             </div>
 
-            <div className="px-3">
+            <div className='px-3'>
               <button
                 type="submit"
-                disabled={loading}
-                className="bg-[#91EAAF] text-[#237928] text-[32px] font-bold group relative w-full item-center justify-center py-3 px-4 rounded-[15px] hover:bg-[#4CAF50] focus:outline-none transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#91EAAF] text-[#237928] text-[32px] font-bold group relative w-full  item-center justify-center py-3 px-4 rounded-[15px] hover:bg-[#4CAF50] focus:outline-none transition-all transform hover:-translate-y-1"
               >
-                {loading ? 'Đang xử lý...' : 'ĐĂNG KÝ'}
+                ĐĂNG KÝ
               </button>
             </div>
 
-            <div className="px-3">
+            <div className='px-3'>
               <button
-                type="button"
+                type="submit"
                 className="bg-[#E2F5E3] text-[#000000] group relative w-full flex justify-center py-3 px-4 rounded-[15px] hover:bg-[#C9DFDF] focus:outline-none transition-all transform hover:-translate-y-1"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
@@ -252,15 +166,17 @@ const SignUp = () => {
           </form>
 
           <div className="text-center mt-4">
-            <p className="text-gray-600">
+            <p className="text-gray-600 py-">
               Bạn đã có tài khoản?{' '}
               <a href="/login" className="text-[#2E4A26] hover:text-[#6E8B3D]">
                 Đăng nhập
               </a>
             </p>
           </div>
+
         </div>
       </div>
+
     </div>
   );
 };

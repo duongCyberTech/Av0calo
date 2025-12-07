@@ -12,12 +12,12 @@ const SignupSuccess = () => {
   const userEmail = location.state?.email || "Bachkhoatuiiu@hcmut.edu.vn";
 
   const handleLoginRedirect = () => {
-    navigate("/");
+    navigate("/login");
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-[#91EAAF] text-gray-700">
-      <Nav />
+      {/* <Nav /> */}
 
       <div className="relative flex flex-grow items-center justify-center px-8 py-12 text-[20px] text-black sm:px-6 lg:px-8">
         <div className="flex-center relative z-10 h-auto w-[704px] items-center space-y-2 rounded-2xl border border-black bg-white p-8">
