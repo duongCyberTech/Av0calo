@@ -8,7 +8,8 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.MAIL_ACCOUNT, 
         pass: process.env.MAIL_PASS // Phải là MẬT KHẨU ỨNG DỤNG của Gmail
-    }
+    },
+    connectionTimeout:60000
 });
 
 transporter.verify(function (error, success) {
