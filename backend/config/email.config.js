@@ -2,16 +2,12 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com", // Thay bằng host thực tế
-    port: 465, // Cổng STARTTLS
-    secure: true, // PHẢI là false khi dùng cổng 587
+    host: "smtp.gmail.com",
+    port: 465, // Cổng SMTPS/SSL
+    secure: true, // BẮT BUỘC là TRUE khi dùng cổng 465
     auth: {
-        // Email người gửi
         user: process.env.MAIL_ACCOUNT, 
-        
-        // MẬT KHẨU ỨNG DỤNG 16 ký tự (cái mà bạn đang tìm cách lấy)
-        // Tuyệt đối không dùng mật khẩu đăng nhập Gmail ở đây
-        pass: process.env.MAIL_PASS 
+        pass: process.env.MAIL_PASS // Phải là MẬT KHẨU ỨNG DỤNG của Gmail
     }
 });
 
