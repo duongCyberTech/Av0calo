@@ -3,8 +3,8 @@ require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com", // Thay bằng host thực tế
-    port: 587, // Cổng STARTTLS
-    secure: false, // PHẢI là false khi dùng cổng 587
+    port: 465, // Cổng STARTTLS
+    secure: true, // PHẢI là false khi dùng cổng 587
     auth: {
         // Email người gửi
         user: process.env.MAIL_ACCOUNT, 
