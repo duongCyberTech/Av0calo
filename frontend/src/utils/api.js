@@ -2,17 +2,26 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export async function fetchJSON(path, options = {}) {
     const url = `${API_BASE}${path}`;
+    
+    // Prepare body and headers
+    let body = options.body;
+    const headers = {
+        ...(options.headers || {})
+    };
+    
+    // Only set Content-Type and stringify if we have a body
+    if (body && typeof body === 'object') {
+        body = JSON.stringify(body);
+        headers['Content-Type'] = 'application/json';
+    }
+    
     const init = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-        },
         ...options,
+        headers,
+        body
     };
 
-    if (init.body && typeof init.body === 'object') {
-        init.body = JSON.stringify(init.body);
-    }
+    console.log('Sending request:', { url, method: init.method, headers: init.headers, body: init.body });
 
     const res = await fetch(url, init);
     const text = await res.text();
