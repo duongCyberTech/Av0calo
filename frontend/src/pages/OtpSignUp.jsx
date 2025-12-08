@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Nav from "../components/Nav.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Check } from "lucide-react";
 
 const OTP = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [isSuccess, setIsSuccess] = useState(false);
+  // const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,7 +46,7 @@ const OTP = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#91EAAF] text-gray-700">
-      <Nav />
+      {/* <Nav /> */}
 
       <div className="relative flex flex-grow items-center justify-center px-8 py-12 sm:px-6 lg:px-8">
         <div className="flex-center relative z-10 h-[650px] w-[704px] items-center space-y-2 rounded-2xl border border-black bg-white p-8">
