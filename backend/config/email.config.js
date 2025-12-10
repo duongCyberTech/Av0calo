@@ -9,7 +9,9 @@ const transporter = nodemailer.createTransport({
         user: process.env.MAIL_ACCOUNT, 
         pass: process.env.MAIL_PASS // Phải là MẬT KHẨU ỨNG DỤNG của Gmail
     },
-    connectionTimeout:60000
+    timeout: 120000, // 60 giây (mặc định là 30 giây)
+    connectionTimeout: 120000,
+    socketTimeout: 120000,
 });
 
 transporter.verify(function (error, success) {
