@@ -8,6 +8,7 @@ import SignupSuccess from "./pages/SignupSuccess";
 import Signin from "./pages/Signin";
 import ForgotPassword from "./pages/ForgotPassword";
 import OTPForgotPass from "./pages/OTPForgotPass";
+import Profile from "./pages/Profile";
 function App() {
   return (
     <Router>
@@ -21,6 +22,7 @@ function App() {
         <Route path="/send-otp-forgotpass" element={<OTPForgotPass />} />
         <Route path="/otp-signup" element={<OtpSignUp />} />
         <Route path="/signup-success" element={<SignupSuccess />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );
