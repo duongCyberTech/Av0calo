@@ -48,6 +48,42 @@ class PromotionsService {
         }
     }
 
+    async comfirmUsePromotion(transaction, uid, promo_id){
+        try {
+            const checkUsePublic = await transaction.query(`
+                UPDATE promotions
+                SET stock = stock - 1
+                WHERE stock > 0 AND promo_id = ?
+            `,[promo_id])
+
+            if (checkUsePublic.affectedRows > 0) {
+                await transaction.query(`
+                    UPDATE promotions
+                    SET used = used + 1
+                    WHERE promo_id = ?
+                `,[promo_id])
+                return;
+            }
+
+            const checkUsePrivate = await transaction.query(`
+                UPDATE customer_promo
+                SET quantity = quantity - 1
+                WHERE uid = ? AND promo_id = ?
+            `, [uid, promo_id])
+
+            if (checkUsePrivate.affectedRows > 0) {
+                await transaction.query(`
+                    UPDATE promotions
+                    SET used = used + 1
+                    WHERE promo_id = ?
+                `,[promo_id])
+                return;
+            }
+        } catch (error) {
+            return;
+        }
+    }
+
     async discountValue(transaction, promo_id, order_id) {
         try {
             const [promoRows] = await transaction.query(`
