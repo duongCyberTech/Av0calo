@@ -1,0 +1,2 @@
+class SentimentAnalysis:
+    pass

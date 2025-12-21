@@ -9,6 +9,7 @@ import Signin from "./pages/Signin";
 import ForgotPassword from "./pages/ForgotPassword";
 import OTPForgotPass from "./pages/OTPForgotPass";
 import Profile from "./pages/Profile";
+import CommentAnalysis from "./pages/CommentAnalysis";
 function App() {
   return (
     <Router>
@@ -23,6 +24,7 @@ function App() {
         <Route path="/otp-signup" element={<OtpSignUp />} />
         <Route path="/signup-success" element={<SignupSuccess />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/comment-analysis" element={<CommentAnalysis />} />
       </Routes>
     </Router>
   );
