@@ -16,10 +16,9 @@ class OrderService {
     try {
       await connection.beginTransaction();
       const shippingFee = 0;
+      // Đơn hàng online ban đầu chưa thanh toán (is_paid = 0)
+      // Chỉ cập nhật thành 1 khi VNPay callback xác nhận thanh toán thành công
       let isPaidValue = 0;
-      if (pay_type === "online") {
-          isPaidValue = 1;
-      }
       if (ship_id) {
         const [checkShip] = await connection.query(
           `SELECT ship_id FROM shipment WHERE ship_id = ?`,

@@ -10,6 +10,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import OTPForgotPass from "./pages/OTPForgotPass";
 import Profile from "./pages/Profile";
 import CommentAnalysis from "./pages/CommentAnalysis";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
 function App() {
   return (
     <Router>
@@ -25,6 +28,9 @@ function App() {
         <Route path="/signup-success" element={<SignupSuccess />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/comment-analysis" element={<CommentAnalysis />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
       </Routes>
     </Router>
   );
