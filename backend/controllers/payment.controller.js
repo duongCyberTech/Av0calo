@@ -55,14 +55,14 @@ class PaymentController {
               [oid]
             );
           }
-          // return res.redirect(`http://localhost:5000/payment/success?oid=${oid}`);
-          return res.send(`
-        <h1 style="color: green; text-align: center; margin-top: 50px;">
-            ✅ THANH TOÁN THÀNH CÔNG!
-        </h1>
-        <p style="text-align: center;">Mã đơn hàng: <b>${oid}</b></p>
-        <p style="text-align: center;">Database đã được cập nhật.</p>
-    `);
+          // res.send(`
+          //     <h1 style="color: green; text-align: center; margin-top: 50px;">
+          //         ✅ THANH TOÁN THÀNH CÔNG!
+          //     </h1>
+          //     <p style="text-align: center;">Mã đơn hàng: <b>${oid}</b></p>
+          //     <p style="text-align: center;">Database đã được cập nhật.</p>
+          // `);
+          return res.redirect(`http://localhost:5174/orders?oid=${oid}&success=true`);
         } else {
           await connection.query(
             `UPDATE orders SET is_paid = 0 WHERE oid = ?`,
