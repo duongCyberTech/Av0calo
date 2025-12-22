@@ -4,15 +4,15 @@ class CartService {
     async getCart(uid) {
         const query = `
             SELECT 
-                c.pid, 
-                c.quantity, 
+                cart.pid, 
+                cart.quantity, 
                 p.title, 
                 p.sell_price, 
                 p.stock,
                 (SELECT img_url FROM img WHERE pid = p.pid LIMIT 1) as image
-            FROM cart c
-            JOIN products p ON c.pid = p.pid
-            WHERE c.uid = ?
+            FROM cart
+            JOIN products p ON cart.pid = p.pid
+            WHERE cart.uid = ?
         `;
         const [rows] = await pool.query(query, [uid]);
         return rows;

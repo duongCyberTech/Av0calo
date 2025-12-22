@@ -64,6 +64,10 @@ class CartController {
             const uid = req.user.uid;
             const { pid } = req.params;
             
+            if (!pid) {
+                return res.status(400).json({ message: "Thiếu Product ID" });
+            }
+            
             await CartService.removeFromCart(uid, pid);
             return res.status(200).json({ message: "Đã xóa sản phẩm khỏi giỏ" });
         } catch (error) {
