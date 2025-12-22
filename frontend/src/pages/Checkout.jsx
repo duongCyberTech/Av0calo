@@ -8,7 +8,7 @@ import { getAddresses, createAddress, deleteAddress } from '../services/addressS
 import { getPromotions } from '../services/promotionService';
 import { fetchJSON } from '../utils/api';
 import { isAuthenticated } from '../services/userService';
-import { CreditCard, MapPin, Truck, Loader, X, Plus, Tag } from 'lucide-react';
+import { CreditCard, MapPin, Truck, Loader, X, Plus, Tag, ArrowLeft } from 'lucide-react';
 
 const Checkout = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -316,7 +316,16 @@ const Checkout = () => {
     <div className="bg-[#F9FBF7] min-h-screen font-['Quicksand']">
       <Header />
       <div className="pt-24 pb-16 max-w-6xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-[#2E4A26] mb-8">Thanh toán</h1>
+        <div className="flex items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate('/cart')}
+            className="flex items-center gap-2 text-[#2E4A26] hover:text-[#74D978] transition-colors"
+            title="Quay lại giỏ hàng"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-3xl font-bold text-[#2E4A26]">Thanh toán</h1>
+        </div>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
