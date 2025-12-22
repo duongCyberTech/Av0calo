@@ -18,7 +18,7 @@ const MenuProps = {
   },
 };
 
-export default function MultipleSelectCheckmarks({names, options, setOptions, label}) {
+export default function MultipleSelectCheckmarks({names, options, setOptions, tag}) {
 
   const handleChange = (event) => {
     const {
@@ -40,7 +40,7 @@ export default function MultipleSelectCheckmarks({names, options, setOptions, la
           multiple
           value={options}
           onChange={handleChange}
-          input={<OutlinedInput label={label ? label : "Tag"} />}
+          input={<OutlinedInput label={tag ? tag : "Tag"} />}
           renderValue={(selected) => selected.join(', ')}
           MenuProps={MenuProps}
         >
