@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import { getCart } from '../services/cartService';
-import { createOrder } from '../services/orderService';
+import { createOrder, createDirectOrder } from '../services/orderService';
 import { createPaymentUrl } from '../services/paymentService';
 import { getAddresses, createAddress, deleteAddress } from '../services/addressService';
 import { getPromotions } from '../services/promotionService';
@@ -11,6 +11,11 @@ import { isAuthenticated } from '../services/userService';
 import { CreditCard, MapPin, Truck, Loader, X, Plus, Tag, ArrowLeft } from 'lucide-react';
 
 const Checkout = () => {
+  const [searchParams] = useSearchParams();
+  const isDirectCheckout = searchParams.get('direct') === 'true';
+  const directPid = searchParams.get('pid');
+  const directQuantity = parseInt(searchParams.get('quantity') || '1', 10);
+
   const [cartItems, setCartItems] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [shipments, setShipments] = useState([]);
@@ -51,37 +56,76 @@ const Checkout = () => {
       return;
     }
     loadData();
-  }, [navigate]);
+  }, [navigate, isDirectCheckout, directPid, directQuantity]);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      // Load cart, addresses, and shipments in parallel
-      const [cartData, addressesData, shipmentsData] = await Promise.all([
-        getCart(),
-        getAddresses(),
-        fetchJSON('/shipments', { method: 'GET' })
-      ]);
+      if (isDirectCheckout && directPid) {
+        // Direct checkout mode: load product info instead of cart
+        const [productData, addressesData, shipmentsData] = await Promise.all([
+          fetchJSON(`/products/${directPid}`, { method: 'GET' }),
+          getAddresses(),
+          fetchJSON('/shipments', { method: 'GET' })
+        ]);
 
-      setCartItems(cartData);
-      setAddresses(addressesData);
-      setShipments(shipmentsData);
+        const product = productData?.data || productData;
+        if (!product) {
+          throw new Error('Không tìm thấy sản phẩm');
+        }
 
-      // Set default address if available
-      if (addressesData.length > 0) {
-        const defaultAddr = addressesData.find(addr => addr.isDefault) || addressesData[0];
-        setSelectedAddress(defaultAddr.aid);
-      }
+        // Format product as cart item for display
+        const directItem = {
+          pid: product.pid,
+          quantity: directQuantity,
+          sell_price: product.sell_price || product.price || 0,
+          title: product.title,
+          image: product.thumbnail || (product.images && product.images[0]) || null,
+          stock: product.stock
+        };
 
-      // Set default shipment if available
-      if (shipmentsData.length > 0) {
-        setSelectedShipment(shipmentsData[0].ship_id);
+        setCartItems([directItem]);
+        setAddresses(addressesData);
+        setShipments(shipmentsData);
+
+        // Set default address if available
+        if (addressesData.length > 0) {
+          const defaultAddr = addressesData.find(addr => addr.isDefault) || addressesData[0];
+          setSelectedAddress(defaultAddr.aid);
+        }
+
+        // Set default shipment if available
+        if (shipmentsData.length > 0) {
+          setSelectedShipment(shipmentsData[0].ship_id);
+        }
+      } else {
+        // Normal checkout mode: load from cart
+        const [cartData, addressesData, shipmentsData] = await Promise.all([
+          getCart(),
+          getAddresses(),
+          fetchJSON('/shipments', { method: 'GET' })
+        ]);
+
+        setCartItems(cartData);
+        setAddresses(addressesData);
+        setShipments(shipmentsData);
+
+        // Set default address if available
+        if (addressesData.length > 0) {
+          const defaultAddr = addressesData.find(addr => addr.isDefault) || addressesData[0];
+          setSelectedAddress(defaultAddr.aid);
+        }
+
+        // Set default shipment if available
+        if (shipmentsData.length > 0) {
+          setSelectedShipment(shipmentsData[0].ship_id);
+        }
       }
 
       setError(null);
     } catch (err) {
-      setError(err.body?.message || 'Không thể tải dữ liệu');
+      setError(err.body?.message || err.message || 'Không thể tải dữ liệu');
       console.error('Error loading checkout data:', err);
     } finally {
       setLoading(false);
@@ -254,16 +298,34 @@ const Checkout = () => {
       setProcessing(true);
       setError(null);
 
-      // Create order
-      const orderData = {
-        aid: selectedAddress,
-        ship_id: selectedShipment || null,
-        pay_type: paymentMethod,
-        note: note || null,
-        promo_id: selectedPromotion?.promo_id || null
-      };
+      let orderResult;
+      
+      if (isDirectCheckout && directPid) {
+        // Direct checkout: create order directly from product
+        const orderData = {
+          aid: selectedAddress,
+          ship_id: selectedShipment || null,
+          pay_type: paymentMethod,
+          note: note || null,
+          promo_id: selectedPromotion?.promo_id || null,
+          pid: directPid,
+          quantity: directQuantity
+        };
 
-      const orderResult = await createOrder(orderData);
+        orderResult = await createDirectOrder(orderData);
+      } else {
+        // Normal checkout: create order from cart
+        const orderData = {
+          aid: selectedAddress,
+          ship_id: selectedShipment || null,
+          pay_type: paymentMethod,
+          note: note || null,
+          promo_id: selectedPromotion?.promo_id || null
+        };
+
+        orderResult = await createOrder(orderData);
+      }
+
       const { oid } = orderResult;
 
       // If online payment, redirect to VNPay
@@ -275,7 +337,7 @@ const Checkout = () => {
         navigate(`/orders?success=true&oid=${oid}`);
       }
     } catch (err) {
-      setError(err.body?.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+      setError(err.body?.message || err.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
       console.error('Error creating order:', err);
       setProcessing(false);
     }
@@ -295,7 +357,7 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !isDirectCheckout) {
     return (
       <div className="bg-[#F9FBF7] min-h-screen">
         <Header />
@@ -318,9 +380,9 @@ const Checkout = () => {
       <div className="pt-24 pb-16 max-w-6xl mx-auto px-4">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate('/cart')}
+            onClick={() => isDirectCheckout ? navigate(-1) : navigate('/cart')}
             className="flex items-center gap-2 text-[#2E4A26] hover:text-[#74D978] transition-colors"
-            title="Quay lại giỏ hàng"
+            title={isDirectCheckout ? "Quay lại" : "Quay lại giỏ hàng"}
           >
             <ArrowLeft size={24} />
           </button>

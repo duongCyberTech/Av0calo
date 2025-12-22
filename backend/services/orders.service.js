@@ -172,6 +172,130 @@ class OrderService {
     return { ...order[0], items };
   }
 
+  async createDirectOrder(uid, data) {
+    const {
+      aid,
+      ship_id,
+      pay_type, // cash or online
+      note,
+      promo_id,
+      pid, // Product ID for direct checkout
+      quantity, // Quantity for direct checkout
+    } = data;
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const shippingFee = 0;
+      let isPaidValue = 0;
+      
+      if (ship_id) {
+        const [checkShip] = await connection.query(
+          `SELECT ship_id FROM shipment WHERE ship_id = ?`,
+          [ship_id]
+        );
+        if (checkShip.length === 0)
+          throw new Error("Mã vận chuyển không hợp lệ");
+      }
+      if (!aid) throw new Error("Vui lòng chọn địa chỉ giao hàng");
+      const [checkAddr] = await connection.query(
+        `SELECT aid FROM addresses WHERE aid = ? AND uid = ?`,
+        [aid, uid]
+      );
+      if (checkAddr.length === 0) throw new Error("Địa chỉ không hợp lệ");
+
+      // Get product info directly (not from cart)
+      const [productRows] = await connection.query(
+        `SELECT pid, sell_price, stock, title
+         FROM products WHERE pid = ?`,
+        [pid]
+      );
+      
+      if (productRows.length === 0) throw new Error("Sản phẩm không tồn tại");
+      
+      const product = productRows[0];
+      if (product.stock < quantity) {
+        throw new Error(`Sản phẩm "${product.title}" không đủ hàng`);
+      }
+
+      const totalPrice = Number(product.sell_price) * quantity;
+      let finalPrice = totalPrice + shippingFee;
+      const oid = uuidv4();
+      const orderTitle = `ORD-${Date.now().toString().slice(-6)}`;
+      
+      await connection.execute(
+        `
+        INSERT INTO orders 
+        (
+          oid, title, description, 
+          create_at, update_at, status, 
+          is_paid, pay_type, 
+          total_price, final_price, shipping_fee, 
+          ship_id, customer_id, aid
+        )
+        VALUES (?, ?, ?, NOW(), NOW(), 'pending', ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          oid,
+          orderTitle,
+          note,
+          isPaidValue,
+          pay_type,
+          totalPrice,
+          finalPrice,
+          shippingFee,
+          ship_id,
+          uid,
+          aid,
+        ]
+      );
+
+      // Add order item
+      await connection.execute(
+        `INSERT INTO orders_item (oid, pid, quantity) VALUES (?, ?, ?)`,
+        [oid, pid, quantity]
+      );
+      
+      // Update product stock
+      await connection.execute(
+        `UPDATE products SET stock = stock - ?, sold = sold + ? WHERE pid = ?`,
+        [quantity, quantity, pid]
+      );
+
+      // Apply promotion if any
+      let discountAmount = 0;
+      if (promo_id) {
+          const {discount} = await PromotionsService.discountValue(connection, promo_id, oid);
+          discountAmount = discount;
+          if (discountAmount > 0) {
+              finalPrice = Math.max(0, finalPrice - discountAmount); 
+              await connection.execute(
+                  `UPDATE orders SET final_price = ? WHERE oid = ?`, 
+                  [finalPrice, oid]
+              );
+              await connection.execute(
+                  `UPDATE promotions SET used = used + 1 WHERE promo_id = ?`,
+                  [promo_id]
+              );
+          }
+      }
+
+      await connection.commit();
+      return {
+        oid,
+        title: orderTitle,
+        final_price: finalPrice,
+        discount: discountAmount,
+        message: "Đặt hàng thành công",
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
   async cancelOrder(uid, oid) {
     const connection = await pool.getConnection();
     try {

@@ -26,6 +26,21 @@ export const createOrder = async (orderData) => {
     }
 };
 
+// Tạo đơn hàng trực tiếp từ sản phẩm (không qua giỏ hàng)
+export const createDirectOrder = async (orderData) => {
+    try {
+        const headers = getAuthHeaders();
+        return await fetchJSON('/orders/direct', {
+            method: 'POST',
+            headers,
+            body: orderData
+        });
+    } catch (error) {
+        console.error('Error creating direct order:', error);
+        throw error;
+    }
+};
+
 // Lấy danh sách đơn hàng của user
 export const getMyOrders = async () => {
     try {
