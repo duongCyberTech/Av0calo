@@ -8,9 +8,9 @@ class ProductController {
       // xử lý ảnh
       let imageUrls = [];
       if (req.files && req.files.length > 0) {
-        imageUrls = req.files.map(file => file.path);
+        imageUrls = req.files.map((file) => file.path);
       }
-      const productdata = {...req.body, images : imageUrls};
+      const productdata = { ...req.body, images: imageUrls };
       const result = await ProductService.CreatProduct(productdata, uid);
 
       res.status(201).json({
@@ -52,12 +52,14 @@ class ProductController {
 
   async updateProduct(req, res) {
     try {
-
       let imageUrls = [];
       if (req.files && req.files.length > 0) {
-        imageUrls = req.files.map(file => file.path);
+        imageUrls = req.files.map((file) => file.path);
       }
-      const productdata = {...req.body, ...(imageUrls.length > 0 && { images: imageUrls })};
+      const productdata = {
+        ...req.body,
+        ...(imageUrls.length > 0 && { images: imageUrls }),
+      };
       const result = await ProductService.updateProduct(
         req.params.pid,
         req.user.uid,
