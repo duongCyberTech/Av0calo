@@ -35,85 +35,6 @@ const opacityMap = {
   "Snack": 0.1
 };
 
-const classData = classes.map((pClass) => {
-  const classTotal = titanicData
-    .filter((item) => item.Class === pClass)
-    .reduce((acc, item) => acc + item.Count, 0);
-  return {
-    id: pClass,
-    label: `${pClass} Class:`,
-    value: classTotal,
-    percentage: (classTotal / totalCount) * 100,
-    color: classColors[pClass],
-  };
-});
-
-const classSurvivalData = classes.flatMap((pClass) => {
-  const classTotal = classData.find((d) => d.id === pClass).value ?? 0;
-  const baseColor = classColors[pClass];
-  return titanicData
-    .filter((item) => item.Class === pClass)
-    .sort((a, b) => (a.Survived > b.Survived ? 1 : -1))
-    .map((item) => ({
-      id: `${pClass}-${item.Survived}`,
-      label: item.Survived,
-      value: item.Count,
-      percentage: (item.Count / classTotal) * 100,
-      color: item.Survived === 'Yes' ? baseColor : `${baseColor}80`, // 80 is 50% opacity for 'No'
-    }));
-});
-
-// Create a simplified dataset that groups all classes together for Yes/No
-const survivalData = [
-  {
-    id: 'Yes',
-    label: 'Survived:',
-    value: titanicData
-      .filter((item) => item.Survived === 'Yes')
-      .reduce((sum, item) => sum + item.Count, 0),
-    percentage:
-      (titanicData
-        .filter((item) => item.Survived === 'Yes')
-        .reduce((sum, item) => sum + item.Count, 0) /
-        totalCount) *
-      100,
-    color: classColors['3rd'],
-  },
-  {
-    id: 'No',
-    label: 'Did not survive:',
-    value: titanicData
-      .filter((item) => item.Survived === 'No')
-      .reduce((sum, item) => sum + item.Count, 0),
-    percentage:
-      (titanicData
-        .filter((item) => item.Survived === 'No')
-        .reduce((sum, item) => sum + item.Count, 0) /
-        totalCount) *
-      100,
-    color: classColors['1st'],
-  },
-];
-
-// Create dataset for class distribution by survival status (Yes first, then No)
-const survivalClassData = [...titanicData]
-  .sort((a) => (a.Survived === 'Yes' ? -1 : 1))
-  .map((item) => {
-    const baseColor = survivalData.find((d) => d.id === item.Survived).color;
-    return {
-      id: `${item.Class}-${item.Survived}`,
-      label: `${item.Class} class:`,
-      value: item.Count,
-      percentage:
-        (item.Count /
-          (item.Survived === 'Yes'
-            ? survivalData[0].value
-            : survivalData[1].value)) *
-        100,
-      color: hexToRgba(baseColor, opacityMap[item.Class] || 1),
-    };
-  });
-
 const StyledText = styled('text')(({ theme }) => ({
   fill: theme.palette.text.primary,
   textAnchor: 'middle',
@@ -130,13 +51,120 @@ function PieCenterLabel({ children }) {
   );
 }
 
-export default function TitanicPie() {
+export default function TitanicPie({ data = [] }) {
   const [view, setView] = React.useState('class');
   const handleViewChange = (event, newView) => {
     if (newView !== null) {
       setView(newView);
     }
   };
+
+  // Transform analysisData to titanicData format
+  const titanicData = React.useMemo(() => {
+    const result = [];
+    data.forEach((item) => {
+      if (item.POS && item.POS > 0) {
+        result.push({
+          Class: item.aspect,
+          Survived: 'Yes',
+          Count: item.POS
+        });
+      }
+      if (item.NEG && item.NEG > 0) {
+        result.push({
+          Class: item.aspect,
+          Survived: 'No',
+          Count: item.NEG
+        });
+      }
+    });
+    return result;
+  }, [data]);
+
+  // Calculate total count
+  const totalCount = React.useMemo(() => {
+    return titanicData.reduce((sum, item) => sum + item.Count, 0);
+  }, [titanicData]);
+
+  // Calculate classData
+  const classData = React.useMemo(() => {
+    return classes.map((pClass) => {
+      const classTotal = titanicData
+        .filter((item) => item.Class === pClass)
+        .reduce((acc, item) => acc + item.Count, 0);
+      return {
+        id: pClass,
+        label: `${pClass} Class:`,
+        value: classTotal,
+        percentage: totalCount > 0 ? (classTotal / totalCount) * 100 : 0,
+        color: classColors[pClass],
+      };
+    });
+  }, [titanicData, totalCount]);
+
+  // Calculate classSurvivalData
+  const classSurvivalData = React.useMemo(() => {
+    return classes.flatMap((pClass) => {
+      const classTotal = classData.find((d) => d.id === pClass)?.value ?? 0;
+      const baseColor = classColors[pClass];
+      return titanicData
+        .filter((item) => item.Class === pClass)
+        .sort((a, b) => (a.Survived > b.Survived ? 1 : -1))
+        .map((item) => ({
+          id: `${pClass}-${item.Survived}`,
+          label: item.Survived,
+          value: item.Count,
+          percentage: classTotal > 0 ? (item.Count / classTotal) * 100 : 0,
+          color: item.Survived === 'Yes' ? baseColor : `${baseColor}80`,
+        }));
+    });
+  }, [titanicData, classData]);
+
+  // Calculate survivalData
+  const survivalData = React.useMemo(() => {
+    const yesTotal = titanicData
+      .filter((item) => item.Survived === 'Yes')
+      .reduce((sum, item) => sum + item.Count, 0);
+    const noTotal = titanicData
+      .filter((item) => item.Survived === 'No')
+      .reduce((sum, item) => sum + item.Count, 0);
+    
+    return [
+      {
+        id: 'Yes',
+        label: 'Survived:',
+        value: yesTotal,
+        percentage: totalCount > 0 ? (yesTotal / totalCount) * 100 : 0,
+        color: classColors['Đóng gói'] || '#fa938e',
+      },
+      {
+        id: 'No',
+        label: 'Did not survive:',
+        value: noTotal,
+        percentage: totalCount > 0 ? (noTotal / totalCount) * 100 : 0,
+        color: classColors['Sản phẩm'] || '#98bf45',
+      },
+    ];
+  }, [titanicData, totalCount]);
+
+  // Calculate survivalClassData
+  const survivalClassData = React.useMemo(() => {
+    return [...titanicData]
+      .sort((a) => (a.Survived === 'Yes' ? -1 : 1))
+      .map((item) => {
+        const baseColor = survivalData.find((d) => d.id === item.Survived)?.color || '#fa938e';
+        return {
+          id: `${item.Class}-${item.Survived}`,
+          label: `${item.Class} class:`,
+          value: item.Count,
+          percentage:
+            (item.Survived === 'Yes'
+              ? (survivalData[0]?.value > 0 ? (item.Count / survivalData[0].value) * 100 : 0)
+              : (survivalData[1]?.value > 0 ? (item.Count / survivalData[1].value) * 100 : 0)),
+          color: hexToRgba(baseColor, opacityMap[item.Class] || 1),
+        };
+      });
+  }, [titanicData, survivalData]);
 
   const innerRadius = 50;
   const middleRadius = 120;
@@ -166,7 +194,7 @@ export default function TitanicPie() {
                 data: classData,
                 arcLabel: (item) => `${item.id} (${item.percentage.toFixed(0)}%)`,
                 valueFormatter: ({ value }) =>
-                  `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)`,
+                  totalCount > 0 ? `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)` : `${value}`,
                 highlightScope: { fade: 'global', highlight: 'item' },
                 highlighted: { additionalRadius: 2 },
                 cornerRadius: 3,
@@ -177,7 +205,7 @@ export default function TitanicPie() {
                 data: classSurvivalData,
                 arcLabel: (item) => `${item.label} (${item.percentage.toFixed(0)}%)`,
                 valueFormatter: ({ value }) =>
-                  `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)`,
+                  totalCount > 0 ? `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)` : `${value}`,
                 arcLabelRadius: 160,
                 highlightScope: { fade: 'global', highlight: 'item' },
                 highlighted: { additionalRadius: 2 },
@@ -202,7 +230,7 @@ export default function TitanicPie() {
                 data: survivalData,
                 arcLabel: (item) => `${item.id} (${item.percentage.toFixed(0)}%)`,
                 valueFormatter: ({ value }) =>
-                  `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)`,
+                  totalCount > 0 ? `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)` : `${value}`,
                 highlightScope: { fade: 'global', highlight: 'item' },
                 highlighted: { additionalRadius: 2 },
                 cornerRadius: 3,
@@ -218,7 +246,7 @@ export default function TitanicPie() {
                 },
                 arcLabelRadius: 160,
                 valueFormatter: ({ value }) =>
-                  `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)`,
+                  totalCount > 0 ? `${value} out of ${totalCount} (${((value / totalCount) * 100).toFixed(0)}%)` : `${value}`,
                 highlightScope: { fade: 'global', highlight: 'item' },
                 highlighted: { additionalRadius: 2 },
                 cornerRadius: 3,

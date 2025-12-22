@@ -68,7 +68,7 @@ export default function CommentAnalysis(){
           justifyContent: "center"
         }}>
           <BarsDataset data={analysisData}/>
-          <TitanicPie />
+          <TitanicPie data={analysisData} />
         </Box>
       </div>
     </div>
