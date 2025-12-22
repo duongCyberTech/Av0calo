@@ -1,15 +1,47 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Nav from "../components/Nav.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Check } from "lucide-react";
+import { fetchJSON } from "../utils/api";
 
 const OTP = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   // const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [sendMessage, setSendMessage] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
 
-  const userEmail = location.state?.email || "Bachkhoatuiiu@hcmut.edu.vn";
+  const regData = location.state?.regData;
+  const userEmail = regData?.email || location.state?.email || "Bachkhoatuiiu@hcmut.edu.vn";
+
+  const sendOTP = async () => {
+    if (!userEmail) return;
+    setSendError("");
+    setSendMessage("");
+    setSending(true);
+    try {
+      const res = await fetchJSON("/auth/send-otp", {
+        method: "POST",
+        body: { email: userEmail, name: regData ? `${regData.fname} ${regData.lname}` : undefined },
+      });
+      setSendMessage(res?.message || "Đã gửi OTP vào email của bạn.");
+    } catch (err) {
+      const msg = typeof err.body === "string" ? err.body : err.body?.message;
+      setSendError(msg || (err.status ? `Gửi OTP thất bại (${err.status})` : "Gửi OTP thất bại"));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  useEffect(() => {
+    // Gửi OTP khi vào màn hình OTP
+    sendOTP();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userEmail]);
 
   const handleChange = (element, index) => {
     const value = element.value;
@@ -34,14 +66,44 @@ const OTP = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setVerifyError("");
     const otpCode = otp.join("");
     if (otpCode.length < 6) {
-      alert("Vui lòng nhập đủ 6 số!");
+      setVerifyError("Vui lòng nhập đủ 6 số!");
       return;
     }
-    navigate("/signup-success", { state: { email: userEmail } });
+    setVerifying(true);
+    try {
+      // Verify OTP first
+      await fetchJSON("/auth/verify-otp", {
+        method: "POST",
+        body: { email: userEmail, otp: otpCode },
+      });
+
+      // If verify success, proceed to register using data from signup
+      if (!regData) {
+        throw { status: 400, body: { message: "Thiếu dữ liệu đăng ký" } };
+      }
+      await fetchJSON("/auth/register", {
+        method: "POST",
+        body: {
+          fname: regData.fname,
+          lname: regData.lname,
+          username: regData.username,
+          email: regData.email,
+          phone: regData.phone,
+          password: regData.password,
+        },
+      });
+      navigate("/signup-success", { state: { email: userEmail } });
+    } catch (err) {
+      const msg = typeof err.body === "string" ? err.body : err.body?.message;
+      setVerifyError(msg || (err.status ? `Xác thực/Đăng ký thất bại (${err.status})` : "Xác thực/Đăng ký thất bại"));
+    } finally {
+      setVerifying(false);
+    }
   };
 
   return (
@@ -64,6 +126,16 @@ const OTP = () => {
           <div className="py-5 text-center text-[20px]">
             <p className="p-3 font-light">Nhập mã OTP 6 số đã được gửi về</p>
             <p className="break-words text-[20px]">{userEmail}</p>
+            {sendMessage && (
+              <div className="mt-3 rounded-lg bg-green-100 px-3 py-2 text-green-700">
+                {sendMessage}
+              </div>
+            )}
+            {sendError && (
+              <div className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-red-700">
+                {sendError}
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -89,19 +161,27 @@ const OTP = () => {
               <div className="font-light">Bạn chưa nhận được mã OTP?</div>
               <button
                 type="button"
-                className="mt-1 transition-colors hover:text-[#2E4A26] hover:underline"
+                className="mt-1 transition-colors hover:text-[#2E4A26] hover:underline disabled:opacity-50"
+                onClick={sendOTP}
+                disabled={sending}
               >
-                Gửi lại mã
+                {sending ? "Đang gửi..." : "Gửi lại mã"}
               </button>
             </div>
 
             {/* Nút Xác Nhận */}
             <button
               type="submit"
-              className="item-center group relative w-full transform justify-center rounded-[15px] bg-[#91EAAF] px-4 py-3 text-[32px] font-bold text-[#237928] transition-all hover:-translate-y-1 hover:bg-[#4CAF50] focus:outline-none"
+              className="item-center group relative w-full transform justify-center rounded-[15px] bg-[#91EAAF] px-4 py-3 text-[32px] font-bold text-[#237928] transition-all hover:-translate-y-1 hover:bg-[#4CAF50] focus:outline-none disabled:opacity-50"
+              disabled={verifying}
             >
-              XÁC NHẬN
+              {verifying ? "Đang xác thực..." : "XÁC NHẬN"}
             </button>
+            {verifyError && (
+              <div className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-center text-red-700">
+                {verifyError}
+              </div>
+            )}
           </form>
         </div>
       </div>

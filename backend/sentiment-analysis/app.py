@@ -4,8 +4,10 @@ from transformers import pipeline
 import joblib
 from sqlalchemy.sql import func
 from sqlalchemy import CheckConstraint
+from flask_cors import CORS
 from extension import db
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:qIBVqCNvzGoXUpLbdHvzIJHTumcTBXUL@crossover.proxy.rlwy.net:13019/railway'
 
 # Tắt tính năng theo dõi sự thay đổi không cần thiết để tiết kiệm tài nguyên

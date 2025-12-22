@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
-import { fetchJSON } from '../utils/api';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
@@ -36,38 +34,38 @@ const SignUp = () => {
       return;
     }
 
-    setLoading(true);
+    // Client-side validation mirroring backend rules
+    const nameRegex = /^[A-Za-zÀ-ỹ\s]+$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?#&])[A-Za-z\d@$!%*?#&]{8,}$/;
 
-    try {
-      const result = await fetchJSON('/auth/register', {
-        method: 'POST',
-        body: {
+    if (!nameRegex.test(formData.fname)) {
+      setError('First name chỉ được chứa chữ cái');
+      return;
+    }
+    if (!nameRegex.test(formData.lname)) {
+      setError('Last name chỉ được chứa chữ cái');
+      return;
+    }
+    if (!passwordRegex.test(formData.password)) {
+      setError('Password phải ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt');
+      return;
+    }
+
+    // Không gọi API đăng ký ở bước này.
+    // Chuyển sang màn hình OTP và gửi kèm toàn bộ dữ liệu để đăng ký sau khi verify thành công.
+    navigate('/otp-signup', {
+      state: {
+        email: formData.email,
+        regData: {
           fname: formData.fname,
           lname: formData.lname,
           username: formData.username,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-        },
-      });
-      console.log('register result:', result);
-
-      // điều hướng tới OTP
-      navigate('/otp-signup', { state: { email: formData.email } });
-    } catch (err) {
-      console.error('register error:', err);
-
-      // Xử lý lỗi validation từ backend
-      let errorMsg = `Lỗi đăng ký (${err.status})`;
-      if (err.body?.errors && Array.isArray(err.body.errors)) {
-        errorMsg = err.body.errors.map(e => e.msg).join('; ');
-      } else if (err.body?.message) {
-        errorMsg = err.body.message;
+        }
       }
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -177,7 +175,7 @@ const SignUp = () => {
               <div>
                 <div className="flex justify-between items-center gap-2 px-5">
                   <label htmlFor="password" className="block font-extralight text-black mb-1">Mật khẩu (*)</label>
-                  <i className="fas fa-lock text-black text-gray-600"></i>
+                  <i className="fas fa-lock text-gray-600"></i>
                 </div>
                 <div className="relative">
                   <input
@@ -234,7 +232,7 @@ const SignUp = () => {
                 disabled={loading}
                 className="bg-[#91EAAF] text-[#237928] text-[32px] font-bold group relative w-full item-center justify-center py-3 px-4 rounded-[15px] hover:bg-[#4CAF50] focus:outline-none transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Đang xử lý...' : 'ĐĂNG KÝ'}
+                {loading ? 'Đang xử lý...' : 'GỬI OTP'}
               </button>
             </div>
 
