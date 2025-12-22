@@ -11,7 +11,7 @@ const Profile = () => {
     const [success, setSuccess] = useState('');
     const [user, setUser] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         fname: '',
         lname: '',
@@ -26,13 +26,13 @@ const Profile = () => {
             navigate('/login');
             return;
         }
-        
+
         const userId = getCurrentUserId();
         if (!userId) {
             setError('Không thể lấy thông tin người dùng');
             return;
         }
-        
+
         loadUserData(userId);
     }, [navigate]);
 
@@ -40,7 +40,7 @@ const Profile = () => {
     const loadUserData = async (userId) => {
         setLoading(true);
         setError('');
-        
+
         try {
             const userData = await getUserById(userId);
             setUser(userData);
@@ -54,7 +54,7 @@ const Profile = () => {
         } catch (err) {
             console.error('Error loading user data:', err);
             setError(err.body?.message || `Lỗi tải dữ liệu (${err.status})`);
-            
+
             // Nếu unauthorized, redirect về login
             if (err.status === 401 || err.status === 403) {
                 navigate('/login');
@@ -101,10 +101,10 @@ const Profile = () => {
             await updateUser(userId, updateData);
             setSuccess('Cập nhật thông tin thành công!');
             setIsEditing(false);
-            
+
             // Reload data để đảm bảo hiển thị đúng
             await loadUserData(userId);
-            
+
         } catch (err) {
             console.error('Error updating user:', err);
             setError(err.body?.message || `Lỗi cập nhật (${err.status})`);
@@ -118,7 +118,7 @@ const Profile = () => {
         setIsEditing(false);
         setError('');
         setSuccess('');
-        
+
         // Reset form về dữ liệu gốc
         if (user) {
             setFormData({
@@ -133,7 +133,7 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#91EAAF] min-h-screen">
+            <div className="bg-[#F1F8E9] min-h-screen">
                 <Header />
                 <div className="flex items-center justify-center py-20">
                     <div className="text-center">
@@ -146,9 +146,9 @@ const Profile = () => {
     }
 
     return (
-        <div className="bg-[#91EAAF] text-gray-700 min-h-screen flex flex-col">
+        <div className="bg-[#F1F8E9] text-gray-700 min-h-screen flex flex-col">
             <Header />
-            
+
             <div className="flex-grow flex items-center justify-center py-12 px-8 sm:px-6 lg:px-8">
                 <div className="w-full max-w-2xl bg-white p-8 rounded-2xl border border-black">
                     <div className="text-center mb-8">
@@ -184,17 +184,16 @@ const Profile = () => {
                                     type="text"
                                     required
                                     disabled={!isEditing}
-                                    className={`w-full px-4 py-3 rounded-xl border ${
-                                        isEditing 
-                                            ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300' 
-                                            : 'bg-gray-100 border-gray-200 cursor-not-allowed'
-                                    } text-black`}
+                                    className={`w-full px-4 py-3 rounded-xl border ${isEditing
+                                        ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300'
+                                        : 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                                        } text-black`}
                                     placeholder="Nhập họ"
                                     value={formData.fname}
                                     onChange={handleChange}
                                 />
                             </div>
-                            
+
                             <div>
                                 <label htmlFor="lname" className="block text-black mb-2 font-medium">
                                     Tên <span className="text-red-500">*</span>
@@ -205,11 +204,10 @@ const Profile = () => {
                                     type="text"
                                     required
                                     disabled={!isEditing}
-                                    className={`w-full px-4 py-3 rounded-xl border ${
-                                        isEditing 
-                                            ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300' 
-                                            : 'bg-gray-100 border-gray-200 cursor-not-allowed'
-                                    } text-black`}
+                                    className={`w-full px-4 py-3 rounded-xl border ${isEditing
+                                        ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300'
+                                        : 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                                        } text-black`}
                                     placeholder="Nhập tên"
                                     value={formData.lname}
                                     onChange={handleChange}
@@ -228,11 +226,10 @@ const Profile = () => {
                                 type="text"
                                 required
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-3 rounded-xl border ${
-                                    isEditing 
-                                        ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300' 
-                                        : 'bg-gray-100 border-gray-200 cursor-not-allowed'
-                                } text-black`}
+                                className={`w-full px-4 py-3 rounded-xl border ${isEditing
+                                    ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300'
+                                    : 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                                    } text-black`}
                                 placeholder="Nhập tên người dùng"
                                 value={formData.username}
                                 onChange={handleChange}
@@ -268,11 +265,10 @@ const Profile = () => {
                                 name="phone"
                                 type="tel"
                                 disabled={!isEditing}
-                                className={`w-full px-4 py-3 rounded-xl border ${
-                                    isEditing 
-                                        ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300' 
-                                        : 'bg-gray-100 border-gray-200 cursor-not-allowed'
-                                } text-black`}
+                                className={`w-full px-4 py-3 rounded-xl border ${isEditing
+                                    ? 'bg-[#F1F8E9] focus:outline-none focus:ring-2 focus:ring-[#A8D08D] border-gray-300'
+                                    : 'bg-gray-100 border-gray-200 cursor-not-allowed'
+                                    } text-black`}
                                 placeholder="Nhập số điện thoại"
                                 value={formData.phone}
                                 onChange={handleChange}

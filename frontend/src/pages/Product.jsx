@@ -13,6 +13,7 @@ const Product = () => {
   const [selectedRating, setSelectedRating] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [products, setProducts] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState({});
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,7 +42,9 @@ const Product = () => {
           rating: p.rating || 0,
           reviews: p.sold ? `${p.sold}+` : '0',
           thumbnail: p.thumbnail || null,
-          images: p.thumbnail ? [p.thumbnail] : [],
+          images: (Array.isArray(p.images) && p.images.length > 0)
+            ? p.images
+            : (p.thumbnail ? [p.thumbnail] : []),
           categoryId: p.cate_id,
           categoryName: p.cate_name,
           stock: p.stock
@@ -49,6 +52,19 @@ const Product = () => {
 
         setProducts(transformedProducts);
         setFilteredProducts(transformedProducts);
+
+        // Initialize image index for all products
+        const imageIndexMap = {};
+        transformedProducts.forEach(p => {
+          imageIndexMap[p.pid] = 0;
+        });
+        setCurrentImageIndex(imageIndexMap);
+
+        // Auto-set max price based on highest product price
+        if (transformedProducts.length > 0) {
+          const maxProductPrice = Math.max(...transformedProducts.map(p => p.price));
+          setPriceMax(Math.ceil(maxProductPrice / 100000) * 100000); // Round up to nearest 100k
+        }
 
         // Build dynamic categories from API results
         const categoryMap = new Map();
@@ -122,7 +138,7 @@ const Product = () => {
     setSelectedCategories([]);
     setSelectedRating(null);
     setPriceMin(0);
-    setPriceMax(300000);
+    setPriceMax(400000);
     setSearchQuery('');
   };
 
@@ -226,8 +242,8 @@ const Product = () => {
                   <div
                     className="absolute h-1.5 bg-[#237928] rounded-full pointer-events-none"
                     style={{
-                      left: `${(priceMin / 300000) * 100}%`,
-                      right: `${100 - (priceMax / 300000) * 100}%`
+                      left: `${(priceMin / 400000) * 100}%`,
+                      right: `${100 - (priceMax / 400000) * 100}%`
                     }}
                   />
 
@@ -235,7 +251,7 @@ const Product = () => {
                   <input
                     type="range"
                     min={0}
-                    max={300000}
+                    max={400000}
                     step={1000}
                     value={priceMin}
                     onChange={(e) => {
@@ -245,7 +261,7 @@ const Product = () => {
                     }}
                     className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#237928] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#237928] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:cursor-pointer"
                     style={{
-                      zIndex: priceMin > 300000 - priceMax ? 5 : 3
+                      zIndex: priceMin > 400000 - priceMax ? 5 : 3
                     }}
                   />
 
@@ -253,7 +269,7 @@ const Product = () => {
                   <input
                     type="range"
                     min={0}
-                    max={300000}
+                    max={400000}
                     step={1000}
                     value={priceMax}
                     onChange={(e) => {
@@ -348,65 +364,120 @@ const Product = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 ml-3 md:ml-6">
-                    {currentProducts.map(product => (
-                      <div
-                        key={product.pid || product.id}
-                        className="rounded-3xl pt-6 pb-6 px-6 transition-all duration-300 hover:-translate-y-1 overflow-visible relative mt-28 w-60 mx-auto cursor-pointer"
-                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
-                        onClick={() => navigate(`/product/${product.pid}`)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/product/${product.pid}`); }}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Xem chi tiết ${product.name}`}
-                      >
-                        {/* Product Image */}
-                        <div className="flex justify-center mb-4 -mt-28">
-                          <Link to={`/product/${product.pid}`} className="w-44 h-44 rounded-full overflow-hidden p-2.5 shadow-md" style={{ backgroundColor: 'rgba(46, 125, 50, 0.81)' }}>
-                            <div className="w-full h-full rounded-full overflow-hidden bg-[#F9FBF7] flex items-center justify-center">
-                              <img
-                                src={
-                                  product.thumbnail ||
-                                  (product.images && product.images.length > 0 ? product.images[0] : product.image) ||
-                                  placeholderImg
-                                }
-                                alt={product.name}
-                                className="w-full h-full object-cover object-center"
-                                onError={(e) => {
-                                  e.target.src = placeholderImg;
-                                }}
-                              />
-                            </div>
-                          </Link>
-                        </div>
+                    {currentProducts.map(product => {
+                      const currentImgIdx = currentImageIndex[product.pid] || 0;
+                      const hasMultipleImages = product.images && product.images.length > 1;
+                      const currentImage = (product.images && product.images.length > 0)
+                        ? product.images[currentImgIdx]
+                        : (product.thumbnail || placeholderImg);
 
-                        {/* Product Name */}
-                        <h3 className="text-center text-lg font-semibold text-[#237928] mb-2">
-                          <Link to={`/product/${product.pid}`}>{product.name}</Link>
-                        </h3>
+                      const handlePrevImage = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setCurrentImageIndex(prev => ({
+                          ...prev,
+                          [product.pid]: currentImgIdx > 0 ? currentImgIdx - 1 : product.images.length - 1
+                        }));
+                      };
 
-                        {/* Rating */}
-                        <div className="flex items-center justify-center gap-1 mb-3">
-                          {[...Array(5)].map((_, i) => (
-                            <i
-                              key={i}
-                              className={`fas fa-star text-base ${i < Math.floor(product.rating || 0) ? 'text-[#FFB800]' : 'text-gray-300'
-                                }`}
-                            ></i>
-                          ))}
-                          <span className="text-xs text-gray-600 ml-1 font-medium">({product.reviews || '0'})</span>
-                        </div>
+                      const handleNextImage = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setCurrentImageIndex(prev => ({
+                          ...prev,
+                          [product.pid]: currentImgIdx < product.images.length - 1 ? currentImgIdx + 1 : 0
+                        }));
+                      };
 
-                        {/* Price and Button */}
-                        <div className="flex items-center justify-center gap-3">
-                          <span className="px-4 py-2 text-[#3D5B2E] rounded-full text-sm font-semibold shadow-[inset_0_0_0_2px_#4A9F67]">
-                            {(product.price || 0).toLocaleString('vi-VN')}
-                          </span>
-                          <Link to={`/product/${product.pid}`} className="px-5 py-2 bg-[#91EAAF] text-black rounded-full text-sm font-semibold hover:bg-[#4CAF50] transition-colors shadow-md hover:shadow-lg whitespace-nowrap">
-                            Mua ngay
-                          </Link>
+                      return (
+                        <div
+                          key={product.pid || product.id}
+                          className="rounded-3xl pt-6 pb-6 px-6 transition-all duration-300 hover:-translate-y-1 overflow-visible relative mt-28 w-60 mx-auto cursor-pointer"
+                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.5)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
+                          onClick={() => navigate(`/product/${product.pid}`)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/product/${product.pid}`); }}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Xem chi tiết ${product.name}`}
+                        >
+                          {/* Product Image */}
+                          <div className="flex justify-center mb-4 -mt-28 relative">
+                            <Link to={`/product/${product.pid}`} className="w-44 h-44 rounded-full overflow-hidden p-2.5 shadow-md" style={{ backgroundColor: 'rgba(46, 125, 50, 0.81)' }}>
+                              <div className="w-full h-full rounded-full overflow-hidden bg-[#F9FBF7] flex items-center justify-center">
+                                <img
+                                  src={currentImage}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover object-center"
+                                  onError={(e) => {
+                                    e.target.src = placeholderImg;
+
+                                    {/* Navigation buttons - only show if multiple images */ }
+                                    {
+                                      hasMultipleImages && (
+                                        <>
+                                          <button
+                                            onClick={handlePrevImage}
+                                            className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-[#237928] transition-all z-10"
+                                            aria-label="Ảnh trước"
+                                          >
+                                            <i className="fas fa-chevron-left text-sm"></i>
+                                          </button>
+                                          <button
+                                            onClick={handleNextImage}
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-[#237928] transition-all z-10"
+                                            aria-label="Ảnh tiếp theo"
+                                          >
+                                            <i className="fas fa-chevron-right text-sm"></i>
+                                          </button>
+
+                                          {/* Image indicator dots */}
+                                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                                            {product.images.map((_, idx) => (
+                                              <div
+                                                key={idx}
+                                                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentImgIdx ? 'bg-[#237928] w-3' : 'bg-gray-300'
+                                                  }`}
+                                              />
+                                            ))}
+                                          </div>
+                                        </>
+                                      )
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </Link>
+                          </div>
+
+                          {/* Product Name */}
+                          <h3 className="text-center text-lg font-semibold text-[#237928] mb-2">
+                            <Link to={`/product/${product.pid}`}>{product.name}</Link>
+                          </h3>
+
+                          {/* Rating */}
+                          <div className="flex items-center justify-center gap-1 mb-3">
+                            {[...Array(5)].map((_, i) => (
+                              <i
+                                key={i}
+                                className={`fas fa-star text-base ${i < Math.floor(product.rating || 0) ? 'text-[#FFB800]' : 'text-gray-300'
+                                  }`}
+                              ></i>
+                            ))}
+                            <span className="text-xs text-gray-600 ml-1 font-medium">({product.reviews || '0'})</span>
+                          </div>
+
+                          {/* Price and Button */}
+                          <div className="flex items-center justify-center gap-3">
+                            <span className="px-4 py-2 text-[#3D5B2E] rounded-full text-sm font-semibold shadow-[inset_0_0_0_2px_#4A9F67]">
+                              {(product.price || 0).toLocaleString('vi-VN')}
+                            </span>
+                            <Link to={`/product/${product.pid}`} className="px-5 py-2 bg-[#91EAAF] text-black rounded-full text-sm font-semibold hover:bg-[#4CAF50] transition-colors shadow-md hover:shadow-lg whitespace-nowrap">
+                              Mua ngay
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
 
@@ -416,9 +487,9 @@ const Product = () => {
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className={`px-4 py-2 text-white rounded flex items-center gap-1 ${currentPage === 1
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-[#8FB569] hover:bg-[#7a9a57]'
+                      className={`px-4 py-2 rounded flex items-center gap-1 ${currentPage === 1
+                        ? 'bg-gray-300 text-white cursor-not-allowed'
+                        : 'bg-[#91EAAF] text-black hover:brightness-95'
                         }`}
                     >
                       <i className="fas fa-arrow-left"></i>
@@ -454,9 +525,9 @@ const Product = () => {
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className={`px-4 py-2 text-white rounded flex items-center gap-1 ${currentPage === totalPages
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-[#8FB569] hover:bg-[#7a9a57]'
+                      className={`px-4 py-2 rounded flex items-center gap-1 ${currentPage === totalPages
+                        ? 'bg-gray-300 text-white cursor-not-allowed'
+                        : 'bg-[#91EAAF] text-black hover:brightness-95'
                         }`}
                     >
                       <span>Sau</span>

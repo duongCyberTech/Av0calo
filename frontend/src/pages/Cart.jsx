@@ -35,7 +35,7 @@ const Cart = () => {
 
   const handleQuantityChange = async (pid, newQuantity) => {
     if (newQuantity < 1) return;
-    
+
     try {
       await updateCartItem(pid, newQuantity);
       await loadCart();
@@ -46,7 +46,7 @@ const Cart = () => {
 
   const handleRemoveItem = async (pid) => {
     if (!window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) return;
-    
+
     try {
       await removeFromCart(pid);
       await loadCart();
@@ -57,7 +57,7 @@ const Cart = () => {
 
   const handleClearCart = async () => {
     if (!window.confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) return;
-    
+
     try {
       await clearCart();
       await loadCart();
@@ -74,7 +74,7 @@ const Cart = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#F9FBF7] min-h-screen">
+      <div className="bg-[#F1F8E9] min-h-screen">
         <Header />
         <div className="pt-24 flex justify-center items-center min-h-[60vh]">
           <div className="text-center">
@@ -87,7 +87,7 @@ const Cart = () => {
   }
 
   return (
-    <div className="bg-[#F9FBF7] min-h-screen font-['Quicksand']">
+    <div className="bg-[#F1F8E9] min-h-screen font-['Josefin_Sans']">
       <Header />
       <div className="pt-24 pb-16 max-w-6xl mx-auto px-4">
         <div className="flex items-center gap-3 mb-8">
@@ -136,7 +136,7 @@ const Cart = () => {
                     <p className="text-[#74D978] font-bold text-lg mb-3">
                       {item.sell_price.toLocaleString('vi-VN')}đ
                     </p>
-                    
+
                     {/* Stock warning */}
                     {item.stock < item.quantity && (
                       <p className="text-red-500 text-sm mb-2">
@@ -193,7 +193,7 @@ const Cart = () => {
             <div className="md:col-span-1">
               <div className="bg-white rounded-xl shadow-md p-6 sticky top-24">
                 <h2 className="text-xl font-bold text-[#2E4A26] mb-4">Tóm tắt đơn hàng</h2>
-                
+
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-gray-600">
                     <span>Tạm tính:</span>
@@ -228,5 +228,4 @@ const Cart = () => {
 };
 
 export default Cart;
-
 

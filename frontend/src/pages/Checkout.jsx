@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { getCart } from '../services/cartService';
-import { createOrder, createDirectOrder } from '../services/orderService';
+import { createOrder } from '../services/orderService';
 import { createPaymentUrl } from '../services/paymentService';
 import { getAddresses, createAddress, deleteAddress } from '../services/addressService';
 import { getPromotions } from '../services/promotionService';
@@ -11,24 +11,19 @@ import { isAuthenticated } from '../services/userService';
 import { CreditCard, MapPin, Truck, Loader, X, Plus, Tag, ArrowLeft } from 'lucide-react';
 
 const Checkout = () => {
-  const [searchParams] = useSearchParams();
-  const isDirectCheckout = searchParams.get('direct') === 'true';
-  const directPid = searchParams.get('pid');
-  const directQuantity = parseInt(searchParams.get('quantity') || '1', 10);
-
   const [cartItems, setCartItems] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
-  
+
   const [selectedAddress, setSelectedAddress] = useState('');
   const [selectedShipment, setSelectedShipment] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'online'
   const [bankCode, setBankCode] = useState('');
   const [note, setNote] = useState('');
-  
+
   // Discount code state
   const [discountCode, setDiscountCode] = useState('');
   const [selectedPromotion, setSelectedPromotion] = useState(null);
@@ -36,7 +31,7 @@ const Checkout = () => {
   const [discountError, setDiscountError] = useState('');
   const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [searchingPromotion, setSearchingPromotion] = useState(false);
-  
+
   // Address modal state
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [newAddress, setNewAddress] = useState({
@@ -47,7 +42,7 @@ const Checkout = () => {
   });
   const [addingAddress, setAddingAddress] = useState(false);
   const [deletingAddressId, setDeletingAddressId] = useState(null);
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,76 +51,37 @@ const Checkout = () => {
       return;
     }
     loadData();
-  }, [navigate, isDirectCheckout, directPid, directQuantity]);
+  }, [navigate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      if (isDirectCheckout && directPid) {
-        // Direct checkout mode: load product info instead of cart
-        const [productData, addressesData, shipmentsData] = await Promise.all([
-          fetchJSON(`/products/${directPid}`, { method: 'GET' }),
-          getAddresses(),
-          fetchJSON('/shipments', { method: 'GET' })
-        ]);
+      // Load cart, addresses, and shipments in parallel
+      const [cartData, addressesData, shipmentsData] = await Promise.all([
+        getCart(),
+        getAddresses(),
+        fetchJSON('/shipments', { method: 'GET' })
+      ]);
 
-        const product = productData?.data || productData;
-        if (!product) {
-          throw new Error('Không tìm thấy sản phẩm');
-        }
+      setCartItems(cartData);
+      setAddresses(addressesData);
+      setShipments(shipmentsData);
 
-        // Format product as cart item for display
-        const directItem = {
-          pid: product.pid,
-          quantity: directQuantity,
-          sell_price: product.sell_price || product.price || 0,
-          title: product.title,
-          image: product.thumbnail || (product.images && product.images[0]) || null,
-          stock: product.stock
-        };
+      // Set default address if available
+      if (addressesData.length > 0) {
+        const defaultAddr = addressesData.find(addr => addr.isDefault) || addressesData[0];
+        setSelectedAddress(defaultAddr.aid);
+      }
 
-        setCartItems([directItem]);
-        setAddresses(addressesData);
-        setShipments(shipmentsData);
-
-        // Set default address if available
-        if (addressesData.length > 0) {
-          const defaultAddr = addressesData.find(addr => addr.isDefault) || addressesData[0];
-          setSelectedAddress(defaultAddr.aid);
-        }
-
-        // Set default shipment if available
-        if (shipmentsData.length > 0) {
-          setSelectedShipment(shipmentsData[0].ship_id);
-        }
-      } else {
-        // Normal checkout mode: load from cart
-        const [cartData, addressesData, shipmentsData] = await Promise.all([
-          getCart(),
-          getAddresses(),
-          fetchJSON('/shipments', { method: 'GET' })
-        ]);
-
-        setCartItems(cartData);
-        setAddresses(addressesData);
-        setShipments(shipmentsData);
-
-        // Set default address if available
-        if (addressesData.length > 0) {
-          const defaultAddr = addressesData.find(addr => addr.isDefault) || addressesData[0];
-          setSelectedAddress(defaultAddr.aid);
-        }
-
-        // Set default shipment if available
-        if (shipmentsData.length > 0) {
-          setSelectedShipment(shipmentsData[0].ship_id);
-        }
+      // Set default shipment if available
+      if (shipmentsData.length > 0) {
+        setSelectedShipment(shipmentsData[0].ship_id);
       }
 
       setError(null);
     } catch (err) {
-      setError(err.body?.message || err.message || 'Không thể tải dữ liệu');
+      setError(err.body?.message || 'Không thể tải dữ liệu');
       console.error('Error loading checkout data:', err);
     } finally {
       setLoading(false);
@@ -146,9 +102,9 @@ const Checkout = () => {
 
   const calculateDiscount = (subtotal, promotion) => {
     if (!promotion) return 0;
-    
+
     const { discount_type, discount_num, max_discount } = promotion;
-    
+
     if (discount_type === 'percent') {
       const discount = subtotal * (Number(discount_num) / 100);
       const maxDiscount = max_discount ? Number(max_discount) : discount;
@@ -198,7 +154,7 @@ const Checkout = () => {
   const handleSelectPromotion = (promotion) => {
     const subtotal = calculateTotal();
     const discount = calculateDiscount(subtotal, promotion);
-    
+
     if (discount > 0 && promotion.stock > 0) {
       setSelectedPromotion(promotion);
       setDiscountCode(promotion.title);
@@ -218,7 +174,7 @@ const Checkout = () => {
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
-    
+
     if (!newAddress.street || !newAddress.district || !newAddress.city) {
       alert('Vui lòng nhập đủ Địa chỉ, Quận/Huyện, Tỉnh/Thành');
       return;
@@ -227,14 +183,14 @@ const Checkout = () => {
     try {
       setAddingAddress(true);
       const createdAddress = await createAddress(newAddress);
-      
+
       // Reload addresses
       const updatedAddresses = await getAddresses();
       setAddresses(updatedAddresses);
-      
+
       // Select the newly created address
       setSelectedAddress(createdAddress.aid || createdAddress.data?.aid);
-      
+
       // Reset form and close modal
       setNewAddress({ street: '', district: '', city: '', isDefault: false });
       setShowAddressModal(false);
@@ -249,7 +205,7 @@ const Checkout = () => {
 
   const handleDeleteAddress = async (aid, e) => {
     e.stopPropagation(); // Prevent selecting the address when clicking delete
-    
+
     if (!window.confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
       return;
     }
@@ -257,11 +213,11 @@ const Checkout = () => {
     try {
       setDeletingAddressId(aid);
       await deleteAddress(aid);
-      
+
       // Reload addresses
       const updatedAddresses = await getAddresses();
       setAddresses(updatedAddresses);
-      
+
       // Clear selected address if it was deleted
       if (selectedAddress === aid) {
         if (updatedAddresses.length > 0) {
@@ -271,7 +227,7 @@ const Checkout = () => {
           setSelectedAddress('');
         }
       }
-      
+
       setError(null);
     } catch (err) {
       setError(err.body?.message || 'Không thể xóa địa chỉ. Vui lòng thử lại.');
@@ -283,7 +239,7 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedAddress) {
       alert('Vui lòng chọn địa chỉ giao hàng');
       return;
@@ -298,34 +254,16 @@ const Checkout = () => {
       setProcessing(true);
       setError(null);
 
-      let orderResult;
-      
-      if (isDirectCheckout && directPid) {
-        // Direct checkout: create order directly from product
-        const orderData = {
-          aid: selectedAddress,
-          ship_id: selectedShipment || null,
-          pay_type: paymentMethod,
-          note: note || null,
-          promo_id: selectedPromotion?.promo_id || null,
-          pid: directPid,
-          quantity: directQuantity
-        };
+      // Create order
+      const orderData = {
+        aid: selectedAddress,
+        ship_id: selectedShipment || null,
+        pay_type: paymentMethod,
+        note: note || null,
+        promo_id: selectedPromotion?.promo_id || null
+      };
 
-        orderResult = await createDirectOrder(orderData);
-      } else {
-        // Normal checkout: create order from cart
-        const orderData = {
-          aid: selectedAddress,
-          ship_id: selectedShipment || null,
-          pay_type: paymentMethod,
-          note: note || null,
-          promo_id: selectedPromotion?.promo_id || null
-        };
-
-        orderResult = await createOrder(orderData);
-      }
-
+      const orderResult = await createOrder(orderData);
       const { oid } = orderResult;
 
       // If online payment, redirect to VNPay
@@ -337,7 +275,7 @@ const Checkout = () => {
         navigate(`/orders?success=true&oid=${oid}`);
       }
     } catch (err) {
-      setError(err.body?.message || err.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+      setError(err.body?.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
       console.error('Error creating order:', err);
       setProcessing(false);
     }
@@ -357,7 +295,7 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0 && !isDirectCheckout) {
+  if (cartItems.length === 0) {
     return (
       <div className="bg-[#F9FBF7] min-h-screen">
         <Header />
@@ -375,14 +313,14 @@ const Checkout = () => {
   }
 
   return (
-    <div className="bg-[#F9FBF7] min-h-screen font-['Quicksand']">
+    <div className="bg-[#F9FBF7] min-h-screen font-['Josefin Sans']">
       <Header />
       <div className="pt-24 pb-16 max-w-6xl mx-auto px-4">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => isDirectCheckout ? navigate(-1) : navigate('/cart')}
+            onClick={() => navigate('/cart')}
             className="flex items-center gap-2 text-[#2E4A26] hover:text-[#74D978] transition-colors"
-            title={isDirectCheckout ? "Quay lại" : "Quay lại giỏ hàng"}
+            title="Quay lại giỏ hàng"
           >
             <ArrowLeft size={24} />
           </button>
@@ -414,7 +352,7 @@ const Checkout = () => {
                   Thêm địa chỉ mới
                 </button>
               </div>
-              
+
               {addresses.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-600 mb-4">Bạn chưa có địa chỉ</p>
@@ -424,11 +362,10 @@ const Checkout = () => {
                   {addresses.map((addr) => (
                     <label
                       key={addr.aid}
-                      className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${
-                        selectedAddress === addr.aid
+                      className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${selectedAddress === addr.aid
                           ? 'border-[#74D978] bg-[#F9FBF7]'
                           : 'border-gray-200 hover:border-[#74D978]/50'
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"
@@ -496,7 +433,7 @@ const Checkout = () => {
                 <CreditCard className="text-[#74D978]" size={24} />
                 <h2 className="text-xl font-bold text-[#2E4A26]">Phương thức thanh toán</h2>
               </div>
-              
+
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#74D978]/50 transition">
                   <input
@@ -554,14 +491,14 @@ const Checkout = () => {
                 <Tag className="text-[#74D978]" size={24} />
                 <h2 className="text-xl font-bold text-[#2E4A26]">Mã giảm giá</h2>
               </div>
-              
+
               {selectedPromotion ? (
                 <div className="bg-[#F9FBF7] border-2 border-[#74D978] rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-[#2E4A26]">{selectedPromotion.title}</p>
                       <p className="text-sm text-gray-600">
-                        {selectedPromotion.discount_type === 'percent' 
+                        {selectedPromotion.discount_type === 'percent'
                           ? `Giảm ${selectedPromotion.discount_num}% (tối đa ${selectedPromotion.max_discount?.toLocaleString('vi-VN')}đ)`
                           : `Giảm ${selectedPromotion.discount_num.toLocaleString('vi-VN')}đ`}
                       </p>
@@ -602,11 +539,11 @@ const Checkout = () => {
                       )}
                     </button>
                   </div>
-                  
+
                   {discountError && (
                     <p className="text-red-500 text-sm">{discountError}</p>
                   )}
-                  
+
                   <button
                     type="button"
                     onClick={() => {
@@ -640,7 +577,7 @@ const Checkout = () => {
           <div className="md:col-span-1">
             <div className="bg-white rounded-xl shadow-md p-6 sticky top-24">
               <h2 className="text-xl font-bold text-[#2E4A26] mb-4">Đơn hàng của bạn</h2>
-              
+
               <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                 {cartItems.map((item) => (
                   <div key={item.pid} className="flex gap-3 text-sm">
@@ -718,7 +655,7 @@ const Checkout = () => {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <form onSubmit={handleAddAddress} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -733,7 +670,7 @@ const Checkout = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Quận/Huyện <span className="text-red-500">*</span>
@@ -747,7 +684,7 @@ const Checkout = () => {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tỉnh/Thành phố <span className="text-red-500">*</span>
@@ -761,7 +698,7 @@ const Checkout = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -774,7 +711,7 @@ const Checkout = () => {
                     Đặt làm địa chỉ mặc định
                   </label>
                 </div>
-                
+
                 <div className="flex gap-3 pt-4">
                   <button
                     type="button"
@@ -825,7 +762,7 @@ const Checkout = () => {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div className="p-6">
                 <div className="mb-4">
                   <input
@@ -848,22 +785,21 @@ const Checkout = () => {
                       const subtotal = calculateTotal();
                       const discount = calculateDiscount(subtotal, promo);
                       const isApplicable = discount > 0 && promo.stock > 0;
-                      
+
                       return (
                         <div
                           key={promo.promo_id}
-                          className={`border-2 rounded-lg p-4 transition ${
-                            isApplicable
+                          className={`border-2 rounded-lg p-4 transition ${isApplicable
                               ? 'border-[#74D978] bg-[#F9FBF7] cursor-pointer hover:bg-[#F0F8F2]'
                               : 'border-gray-200 bg-gray-50 opacity-60'
-                          }`}
+                            }`}
                           onClick={() => isApplicable && handleSelectPromotion(promo)}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h3 className="font-bold text-[#2E4A26] mb-1">{promo.title}</h3>
                               <p className="text-sm text-gray-600 mb-2">
-                                {promo.discount_type === 'percent' 
+                                {promo.discount_type === 'percent'
                                   ? `Giảm ${promo.discount_num}% (tối đa ${promo.max_discount?.toLocaleString('vi-VN')}đ)`
                                   : `Giảm ${promo.discount_num.toLocaleString('vi-VN')}đ`}
                               </p>
@@ -906,5 +842,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
-
 

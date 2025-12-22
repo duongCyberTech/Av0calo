@@ -27,8 +27,8 @@ const Nav = () => {
   // Hàm tạo style cho Link active
   const navLinkStyle = ({ isActive }) =>
     isActive
-      ? "text-[#2E4A26] font-bold border-b-2 border-[#2E4A26] pb-1 mx-2"
-      : "text-gray-600 hover:text-[#74D978] transition mx-2";
+      ? "text-black font-bold border-b-2 border-black pb-1 mx-3 text-xl"
+      : "text-black hover:text-gray-700 transition mx-3 text-xl";
 
   return (
     <>
@@ -38,27 +38,27 @@ const Nav = () => {
           <NavLink to="/" className={navLinkStyle}>Trang chủ</NavLink>
           <NavLink to="/product" className={navLinkStyle}>Sản phẩm</NavLink>
           <NavLink to="/subscription" className={navLinkStyle}>Gói đăng ký</NavLink>
-          
+
           {userLoggedIn ? (
             // User đã đăng nhập
             <div className="flex items-center ml-4 space-x-2">
-              <NavLink 
-                to="/cart" 
-                className="flex items-center text-[#2E4A26] hover:text-[#74D978] px-3 py-2 rounded-lg transition"
+              <NavLink
+                to="/cart"
+                className="flex items-center text-black hover:text-gray-700 px-3 py-2 rounded-lg transition text-xl"
               >
                 <ShoppingCart size={18} className="mr-1" />
                 Giỏ hàng
               </NavLink>
-              <NavLink 
-                to="/profile" 
-                className="flex items-center text-[#2E4A26] hover:text-[#74D978] px-3 py-2 rounded-lg transition"
+              <NavLink
+                to="/profile"
+                className="flex items-center text-black hover:text-gray-700 px-3 py-2 rounded-lg transition text-xl"
               >
                 <User size={18} className="mr-1" />
                 Hồ sơ
               </NavLink>
               <button
                 onClick={handleLogout}
-                className="flex items-center text-red-600 hover:text-red-800 px-3 py-2 rounded-lg transition"
+                className="flex items-center text-red-600 hover:text-red-800 px-3 py-2 rounded-lg transition text-xl"
               >
                 <LogOut size={18} className="mr-1" />
                 Đăng xuất
@@ -67,10 +67,10 @@ const Nav = () => {
           ) : (
             // Guest user
             <div className="flex items-center ml-4 space-x-2">
-              <NavLink to="/login" className="text-[#2E4A26] hover:text-[#74D978] px-3 py-2 rounded-lg transition">
+              <NavLink to="/login" className="text-black hover:text-gray-700 px-3 py-2 rounded-lg transition text-xl">
                 Đăng nhập
               </NavLink>
-              <NavLink to="/register" className="bg-[#2E4A26] text-white px-4 py-2 rounded-full hover:bg-black transition">
+              <NavLink to="/register" className="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition text-xl">
                 Đăng ký
               </NavLink>
             </div>
@@ -88,32 +88,32 @@ const Nav = () => {
       {/* Mobile Menu Content */}
       {isOpen && (
         <div className="absolute top-[80px] left-0 w-full bg-[#F9FBF7] shadow-lg flex flex-col items-center py-4 space-y-4 md:hidden z-40">
-          <NavLink to="/" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">Trang chủ</NavLink>
-          <NavLink to="/product" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">Sản phẩm</NavLink>
-          <NavLink to="/subscription" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">Gói đăng ký</NavLink>
-          
+          <NavLink to="/" onClick={toggleNavbar} className="text-[#2E4A26] font-bold text-lg">Trang chủ</NavLink>
+          <NavLink to="/product" onClick={toggleNavbar} className="text-[#2E4A26] font-bold text-lg">Sản phẩm</NavLink>
+          <NavLink to="/subscription" onClick={toggleNavbar} className="text-[#2E4A26] font-bold text-lg">Gói đăng ký</NavLink>
+
           {userLoggedIn ? (
             // User đã đăng nhập
             <>
-              <NavLink 
-                to="/cart" 
-                onClick={toggleNavbar} 
-                className="flex items-center text-[#2E4A26] font-bold"
+              <NavLink
+                to="/cart"
+                onClick={toggleNavbar}
+                className="flex items-center text-[#2E4A26] font-bold text-lg"
               >
                 <ShoppingCart size={18} className="mr-2" />
                 Giỏ hàng
               </NavLink>
-              <NavLink 
-                to="/profile" 
-                onClick={toggleNavbar} 
-                className="flex items-center text-[#2E4A26] font-bold"
+              <NavLink
+                to="/profile"
+                onClick={toggleNavbar}
+                className="flex items-center text-[#2E4A26] font-bold text-lg"
               >
                 <User size={18} className="mr-2" />
                 Hồ sơ cá nhân
               </NavLink>
               <button
                 onClick={handleLogout}
-                className="flex items-center text-red-600 font-bold"
+                className="flex items-center text-red-600 font-bold text-lg"
               >
                 <LogOut size={18} className="mr-2" />
                 Đăng xuất
@@ -122,10 +122,10 @@ const Nav = () => {
           ) : (
             // Guest user
             <>
-              <NavLink to="/login" onClick={toggleNavbar} className="text-[#2E4A26] font-bold">
+              <NavLink to="/login" onClick={toggleNavbar} className="text-[#2E4A26] font-bold text-lg">
                 Đăng nhập
               </NavLink>
-              <NavLink to="/register" onClick={toggleNavbar} className="bg-[#2E4A26] text-white px-6 py-2 rounded-full">
+              <NavLink to="/register" onClick={toggleNavbar} className="bg-[#2E4A26] text-white px-6 py-2 rounded-full text-lg">
                 Đăng ký
               </NavLink>
             </>
