@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
 import { fetchJSON } from '../utils/api';
 
@@ -95,7 +94,7 @@ const SignIn = () => {
                             <div>
                                 <div className='flex justify-between items-center gap-2 px-5'>
                                     <label htmlFor="password" className="block font-extralight text-black mb-1">Mật khẩu (*)</label>
-                                    <i className="fas fa-lock text-black text-gray-600"></i>
+                                    <i className="fas fa-lock text-gray-600"></i>
                                 </div>
                                 <div className="relative">
                                     <input
