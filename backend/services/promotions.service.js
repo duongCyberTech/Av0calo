@@ -139,8 +139,7 @@ class PromotionsService {
     }
 
     async getAllPromotions(queryParams) {
-        const transaction = await pool.getConnection();
-        await transaction.beginTransaction();
+        const connection = await pool.getConnection();
         try {
             const { search, page, limit, order_id } = queryParams;
             const offset = page && limit ? (Number(page) - 1) * Number(limit) : 0;
