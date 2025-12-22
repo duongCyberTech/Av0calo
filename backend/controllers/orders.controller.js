@@ -49,6 +49,38 @@ class OrderController {
     }
   }
 
+  async createDirectOrder(req, res) {
+    try {
+      const uid = req.user.uid;
+      const { aid, ship_id, pay_type, note, promo_id, pid, quantity } = req.body;
+
+      if (!aid)
+        return res.status(400).json({ message: "Thiếu ID địa chỉ (aid)" });
+      if (!pay_type)
+        return res
+          .status(400)
+          .json({ message: "Thiếu phương thức thanh toán" });
+      if (!pid || !quantity)
+        return res
+          .status(400)
+          .json({ message: "Thiếu thông tin sản phẩm (pid, quantity)" });
+
+      const result = await OrderService.createDirectOrder(uid, {
+        aid,
+        ship_id,
+        pay_type,
+        note,
+        promo_id,
+        pid,
+        quantity
+      });
+
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+  }
+
   async cancelOrder(req, res) {
     try {
       await OrderService.cancelOrder(req.user.uid, req.params.oid);

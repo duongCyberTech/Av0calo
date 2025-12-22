@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import placeholderImg from "../assets/product-placeholder.svg";
 import { fetchJSON } from "../utils/api";
-import { addToCart, clearCart } from "../services/cartService";
+import { addToCart } from "../services/cartService";
 import { isAuthenticated } from "../services/userService";
 
 const sizeOptions = [
@@ -396,7 +396,7 @@ const ProductDetail = () => {
                                 {/* Actions */}
                                 <div className="flex items-center gap-4 pt-2">
                                     <button className="px-6 h-12 rounded-[40px] bg-white text-[#237928] border-2 border-[#4CAF50] text-lg font-medium hover:bg-[#EAF7EA]" onClick={handleAddToCart}>Thêm vào giỏ</button>
-                                    <button className="px-8 h-12 rounded-[40px] bg-[#5DA56D] text-white text-lg font-semibold hover:bg-[#4C915C]" onClick={async () => {
+                                    <button className="px-8 h-12 rounded-[40px] bg-[#5DA56D] text-white text-lg font-semibold hover:bg-[#4C915C]" onClick={() => {
                                         if (!isAuthenticated()) {
                                             alert("Vui lòng đăng nhập để thanh toán");
                                             navigate('/login');
@@ -408,18 +408,8 @@ const ProductDetail = () => {
                                             return;
                                         }
 
-                                        try {
-                                            // Xóa giỏ hàng hiện tại để chỉ thanh toán sản phẩm này
-                                            await clearCart();
-                                            // Thêm sản phẩm này vào giỏ hàng
-                                            await addToCart(product.pid, qty);
-                                            // Điều hướng đến checkout
-                                            navigate('/checkout');
-                                        } catch (error) {
-                                            const errorMessage = error?.body?.message || error?.message || "Không thể thêm vào giỏ hàng";
-                                            alert(errorMessage);
-                                            console.error("Error adding to cart:", error);
-                                        }
+                                        // Điều hướng đến checkout với thông tin sản phẩm trực tiếp (không qua giỏ hàng)
+                                        navigate(`/checkout?direct=true&pid=${product.pid}&quantity=${qty}`);
                                     }}>Thanh toán</button>
                                 </div>
                             </div>
