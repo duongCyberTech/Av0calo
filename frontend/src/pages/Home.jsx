@@ -1,171 +1,297 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
-import { NavLink } from "react-router-dom";
-// import Footer from "../components/Footer";
+import Footer from "../components/Footer";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import Nav from "../components/Nav";
+import placeholderImg from "../assets/product-placeholder.svg";
+import { fetchJSON } from "../utils/api";
 
 const Home = () => {
-  // Dữ liệu sản phẩm giả lập
-  const products = [
-    {
-      id: 1,
-      name: "Dầu bơ",
-      rating: 5,
-      reviews: 1005,
-      price: 550000,
-      img: "https://images.unsplash.com/photo-1601039641847-7857b994d704?w=300",
-    },
-    {
-      id: 2,
-      name: "Mặt nạ",
-      rating: 5,
-      reviews: 2000,
-      price: 150000,
-      img: "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?w=300",
-    },
-    {
-      id: 3,
-      name: "Bơ sấy",
-      rating: 4.5,
-      reviews: 500,
-      price: 90000,
-      img: "https://images.unsplash.com/photo-1615485925763-867862f80a90?w=300",
-    },
-    {
-      id: 4,
-      name: "Bột bơ",
-      rating: 5,
-      reviews: 1205,
-      price: 250000,
-      img: "https://images.unsplash.com/photo-1596560548464-f010549b84d7?w=300",
-    },
-    {
-      id: 5,
-      name: "Sốt bơ",
-      rating: 5,
-      reviews: 3020,
-      price: 120000,
-      img: "https://images.unsplash.com/photo-1590779033100-9f60a05a013d?w=300",
-    },
-  ];
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchJSON("/products/all", { method: "GET" });
+        const productList = Array.isArray(response)
+          ? response
+          : response.result || [];
+
+        // Transform data to match frontend structure
+        const transformedProducts = productList.map((p) => ({
+          pid: p.pid,
+          name: p.title,
+          price: p.sell_price || p.price || 0,
+          rating: p.rating || 0,
+          reviews: p.sold ? `${p.sold}+` : "0",
+          thumbnail: p.thumbnail || null,
+          images: p.thumbnail ? [p.thumbnail] : [],
+          categoryId: p.cate_id,
+          categoryName: p.cate_name,
+          stock: p.stock
+        }));
+
+        setProducts(transformedProducts);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Hàm xử lý cuộn trang mượt mà
+  const scrollToContact = () => {
+    const contactSection = document.getElementById("contact-form");
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
-    <div className="bg-[#F9FBF7] min-h-screen font-['Quicksand'] pt-[80px]">
+    <div className="min-h-screen overflow-x-hidden bg-[#F1F8E9] font-['Josefin_Sans']">
       <Header />
 
-      {/* --- HERO SECTION --- */}
-      <header className="relative py-16 overflow-hidden">
-        {/* Vòng tròn trang trí nền */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#B5E4B9] rounded-full blur-3xl opacity-50 -z-10 translate-x-1/2 -translate-y-1/4"></div>
+      {/* --- HERO SECTION (Đã chỉnh lề rộng) --- */}
+      <header className="relative overflow-hidden py-24">
+        <div className="absolute right-0 top-0 -z-10 h-[600px] w-[600px] -translate-y-1/4 translate-x-1/2 rounded-full bg-[#B5E4B9] opacity-50 blur-3xl"></div>
 
-        <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
+        <div className="mx-auto grid max-w-[1440px] items-center gap-16 px-10 md:grid-cols-2">
           <div>
-            <h1 className="text-5xl font-extrabold text-[#38491E] mb-2 font-['Nunito']">
-              Av<span className="text-[#F2C94C]">0</span>Calo
+            <h1 className="mb-2 text-[64px] font-bold italic leading-none text-black">
+              Av0Calo
             </h1>
-            <h2 className="text-3xl font-bold text-[#38491E] mb-6 leading-tight">
-              Nguồn năng lượng xanh cho <br /> ngày mới nhẹ nhàng
+            <h2 className="mb-8 text-[42px] font-semibold leading-tight text-[#266A29]">
+              Nguồn năng lượng xanh cho ngày mới nhẹ nhàng
             </h2>
-            <p className="text-gray-600 mb-8 max-w-md">
+            <p className="mb-10 max-w-xl text-[22px] leading-relaxed text-gray-800">
               Từ quả bơ nguyên chất, chúng tôi tạo nên những sản phẩm lành mạnh,
               giúp bạn sống cân bằng và yêu cơ thể mỗi ngày.
             </p>
-            <button className="bg-[#74D978] hover:bg-[#5fc063] text-[#1E4D2B] font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:-translate-y-1">
+            <button className="rounded-[20px] bg-[#91EAAF] px-12 py-4 text-[26px] font-bold text-black shadow-xl transition-all hover:-translate-y-1 hover:bg-[#4CAF50] focus:outline-none">
               Danh mục sản phẩm
             </button>
           </div>
-          {/* Ảnh Hero */}
+
           <div className="relative flex justify-center">
-            <div className="w-80 h-80 rounded-full border-[8px] border-[#74D978] overflow-hidden shadow-2xl relative z-10 bg-white">
+            <div className="relative z-10 h-[450px] w-[450px] overflow-hidden rounded-full border-[12px] border-[#74D978] bg-white shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1523049673856-356c64cf4c94?w=600"
+                src="/src/assets/home1.png"
                 alt="Avocado"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
-            {/* Vòng tròn trang trí sau ảnh */}
-            <div className="absolute bg-[#2E7D32] w-80 h-80 rounded-full -z-10 top-4 -right-4"></div>
+            <div className="absolute -right-8 top-8 -z-10 h-[450px] w-[450px] rounded-full bg-[#2E7D32]"></div>
           </div>
         </div>
       </header>
 
-      {/* --- PRODUCT LIST --- */}
-      <section className="py-12 max-w-7xl mx-auto px-4">
-        <h3 className="text-xl font-bold text-[#38491E] mb-16 text-center md:text-left pl-4 border-l-4 border-[#74D978]">
+      {/* --- PRODUCTS SECTION --- */}
+      <section className="mx-auto max-w-[1440px] px-10 py-20">
+        <h2 className="mb-16 text-4xl font-bold text-[#266A29]">
           Sản phẩm từ bơ - Dinh dưỡng xanh, năng lượng sạch
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 gap-y-16">
-          {products.map((p) => (
-            <div
-              key={p.id}
-              className="bg-white rounded-2xl shadow-lg p-4 pt-16 relative text-center group hover:-translate-y-2 transition duration-300"
-            >
-              {/* Ảnh nổi */}
-              <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-24 h-24 rounded-full p-1 bg-white shadow-md">
-                <img
-                  src={p.img}
-                  alt={p.name}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-              <h4 className="font-bold text-[#38491E] text-lg mb-1">
-                {p.name}
-              </h4>
-              <div className="flex justify-center text-yellow-400 text-xs mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <i
-                    key={i}
-                    className={`fas fa-star ${i < Math.floor(p.rating) ? "" : "text-gray-300"}`}
-                  ></i>
-                ))}
-                <span className="text-gray-400 ml-1">({p.reviews})</span>
-              </div>
-              <div className="flex justify-between items-center mt-2 px-2">
-                <span className="font-bold text-[#38491E]">
-                  {p.price.toLocaleString()}đ
-                </span>
-                <button className="bg-[#91EAAF] text-[#1E4D2B] text-xs font-bold px-3 py-1 rounded-full hover:bg-green-400">
-                  Mua ngay
-                </button>
-              </div>
+        </h2>
+        <div className="grid grid-cols-2 gap-16 gap-y-24 pt-8 md:grid-cols-3 md:gap-20 md:gap-y-28 lg:grid-cols-5 lg:gap-24">
+          {loading ? (
+            <div className="col-span-full text-center text-lg text-gray-600">
+              Đang tải sản phẩm...
             </div>
-          ))}
+          ) : products.length === 0 ? (
+            <div className="col-span-full text-center text-lg text-gray-600">
+              Chưa có sản phẩm nào
+            </div>
+          ) : (
+            products.map((p) => (
+              <div
+                key={p.pid}
+                className="relative mx-auto mt-28 w-60 cursor-pointer overflow-visible rounded-3xl px-6 pb-6 pt-6 transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.5)",
+                  boxShadow:
+                    "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+                }}
+                onClick={() => navigate(`/product/${p.pid}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") navigate(`/product/${p.pid}`);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Xem chi tiết ${p.name}`}
+              >
+                <div className="-mt-28 mb-4 flex justify-center">
+                  <Link
+                    to={`/product/${p.pid}`}
+                    className="h-44 w-44 overflow-hidden rounded-full p-2.5 shadow-md"
+                    style={{ backgroundColor: "rgba(46,125,50,0.81)" }}
+                  >
+                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#F9FBF7]">
+                      <img
+                        src={p.thumbnail || p.images?.[0] || placeholderImg}
+                        alt={p.name}
+                        className="h-full w-full object-cover object-center"
+                        onError={(e) => {
+                          e.currentTarget.src = placeholderImg;
+                        }}
+                      />
+                    </div>
+                  </Link>
+                </div>
+                <h4 className="mb-2 text-center text-lg font-semibold text-[#237928]">
+                  {p.name}
+                </h4>
+                {/* Rating row to match listing cards */}
+                <div className="mb-3 flex items-center justify-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <i
+                      key={i}
+                      className={`fas fa-star text-base ${i < Math.floor(p.rating || 0) ? "text-[#FFB800]" : "text-gray-300"}`}
+                    ></i>
+                  ))}
+                  <span className="ml-1 text-xs font-medium text-gray-600">
+                    ({p.reviews || "0"})
+                  </span>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="rounded-full px-4 py-2 text-sm font-semibold text-[#3D5B2E] shadow-[inset_0_0_0_2px_#4A9F67]">
+                    {(p.price || 0).toLocaleString("vi-VN")}
+                  </span>
+                  <Link
+                    to={`/product/${p.pid}`}
+                    className="whitespace-nowrap rounded-full bg-[#91EAAF] px-5 py-2 text-sm font-semibold text-black shadow-md transition-colors hover:bg-[#4CAF50] hover:shadow-lg"
+                  >
+                    Mua ngay
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
-      {/* --- INFO SECTION --- */}
-      <section className="py-12 px-4 max-w-6xl mx-auto">
-        <div className="bg-[#C4EBC8] rounded-[40px] p-8 md:p-12 flex flex-col md:flex-row items-center gap-10 shadow-sm relative overflow-hidden">
-          <div className="flex-1 z-10">
-            <h2 className="text-3xl font-bold text-[#38491E] mb-6">
-              Giới thiệu về Av0Calo
-            </h2>
-            <ul className="space-y-3 text-[#2E4A26]">
-              <li>
-                <strong>"Avocado"</strong> - quả bơ, nguyên liệu chủ đạo giàu dinh dưỡng.
-              </li>
-              <li>
-                <strong>"0 / Zero"</strong> - biểu trưng cho tinh thần Eat Clean, nói “không” với đường tinh luyện, chất bảo quản và calo dư thừa.
-              </li>
-              <li>
-                <strong>"Calorie"</strong> - gợi liên tưởng đến năng lượng tích cực, khỏe mạnh, và lối sống lành mạnh.
-              </li>
-              <li>
-                Tên gọi vừa hiện đại, vừa dễ nhớ, thể hiện rõ định vị thương hiệu thực phẩm xanh – sạch – năng lượng tích cực, giúp mỗi người hướng đến cơ thể khỏe mạnh và tâm trí an yên.
-              </li>
-            </ul>
-            <button className="mt-6 bg-[#2E4A26] text-white px-6 py-2 rounded-full font-bold shadow hover:bg-black transition">
+      {/* --- INTRO SECTION --- */}
+      <section className="px-10 pb-24">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-16 rounded-[60px] bg-[#D1EBD8] p-16 md:flex-row">
+          <div className="md:w-3/5">
+            <h3 className="mb-10 text-5xl font-bold text-[#266A29]">
+              Giới thiệu về AvOcalo
+            </h3>
+            <div className="space-y-6 text-[20px] leading-relaxed">
+              <p>
+                <strong>"Avocado"</strong> - quả bơ, nguyên liệu chủ đạo giàu
+                dinh dưỡng.
+              </p>
+              <p>
+                <strong>"0 / Zero"</strong> - tinh thần Eat Clean, nói "không"
+                với đường tinh luyện và chất bảo quản.
+              </p>
+              <p>
+                <strong>"Calorie"</strong> - năng lượng tích cực, khỏe mạnh, và
+                lối sống lành mạnh.
+              </p>
+            </div>
+            {/* Nút Tìm hiểu thêm số 1 */}
+            <button
+              onClick={scrollToContact}
+              className="mt-12 rounded-full bg-[#5FA563] px-12 py-4 text-[24px] font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-[#237928]"
+            >
               Tìm hiểu thêm
             </button>
           </div>
-          <div className="flex-1">
+          <div className="md:w-2/5">
             <img
-              src="https://images.unsplash.com/photo-1601039641847-7857b994d704?w=600"
-              className="rounded-3xl shadow-lg transform rotate-2 hover:rotate-0 transition duration-500"
+              src="/src/assets/Subscription3.jpg"
+              className="h-[450px] w-full rounded-[40px] object-cover shadow-2xl"
               alt="Intro"
             />
           </div>
         </div>
       </section>
+
+      {/* --- SUBSCRIPTION SECTION --- */}
+      <section className="mx-auto mb-20 flex max-w-[1600px] flex-col items-stretch gap-10 px-10 md:flex-row">
+        <div className="hidden w-1/4 overflow-hidden rounded-[40px] border-4 border-[#2D5A27] md:block">
+          <img
+            src="/src/assets/home3.jpg"
+            className="h-full w-full object-cover"
+            alt="Sub 1"
+          />
+        </div>
+        <div className="flex flex-col justify-center rounded-[50px] bg-[#9CE1A0] p-16 text-center md:w-2/4">
+          <h3 className="mb-8 font-serif text-[64px] font-bold italic text-[#266A29]">
+            Subscription Box
+          </h3>
+          <p className="mb-8 text-[22px] leading-relaxed text-[#1B4D1D]">
+            Trải nghiệm lối sống lành mạnh với gói giao định kỳ 3–4 sản phẩm bơ
+            tuyển chọn, tiện lợi và giàu dinh dưỡng hằng ngày.
+          </p>
+          {/* Nút Tìm hiểu thêm số 2 */}
+          <button
+            onClick={scrollToContact}
+            className="mx-auto w-fit rounded-full bg-[#237928] px-14 py-4 text-[26px] font-bold text-white shadow-xl transition-all hover:-translate-y-1 hover:bg-black"
+          >
+            Tìm hiểu thêm
+          </button>
+        </div>
+        <div className="hidden w-1/4 overflow-hidden rounded-[40px] border-4 border-[#2D5A27] md:block">
+          <img
+            src="/src/assets/home4.jpg"
+            className="h-full w-full object-cover"
+            alt="Sub 2"
+          />
+        </div>
+      </section>
+
+      {/* --- CONTACT FORM (Thêm ID để scroll tới) --- */}
+      <section id="contact-form" className="scroll-mt-20 px-10 py-24">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-24 rounded-[80px] bg-[#91EAAF]/45 p-20 md:flex-row">
+          <div className="flex justify-center md:w-1/3">
+            <img
+              src="/src/assets/home5.png"
+              alt="Heart Avocado"
+              className="w-[350px] animate-pulse"
+            />
+          </div>
+          <div className="w-full md:w-2/3">
+            <h3 className="mb-12 text-6xl font-bold text-[#266A29]">
+              Liên hệ với chúng tôi
+            </h3>
+            <form className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <input
+                  type="text"
+                  placeholder="Họ và tên"
+                  className="rounded-full border border-green-800 bg-white/50 px-8 py-4 text-xl ring-green-500 focus:outline-none focus:ring-2"
+                />
+                <input
+                  type="text"
+                  placeholder="SĐT"
+                  className="rounded-full border border-green-800 bg-white/50 px-8 py-4 text-xl focus:outline-none"
+                />
+              </div>
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full rounded-full border border-green-800 bg-white/50 px-8 py-4 text-xl focus:outline-none"
+              />
+              <textarea
+                placeholder="Lời nhắn..."
+                className="h-48 w-full rounded-[40px] border border-green-800 bg-[#74D978] px-8 py-6 text-xl placeholder-green-900 focus:outline-none"
+              ></textarea>
+              <button className="w-full rounded-full bg-[#266A29] py-5 text-2xl font-bold text-white shadow-2xl transition-all hover:bg-black">
+                GỬI THÔNG TIN
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };
