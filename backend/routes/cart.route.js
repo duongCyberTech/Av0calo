@@ -6,7 +6,7 @@ const { authen } = require('../middlewares/authentication.middleware');
 router.get('/', authen, CartController.getCart);          
 router.post('/', authen, CartController.addToCart);        
 router.put('/', authen, CartController.updateCart);        
-router.delete('/:pid', authen, CartController.removeItem); 
-router.delete('/', authen, CartController.clearCart);     
+router.delete('/', authen, CartController.clearCart);      // Phải đặt trước route /:pid
+router.delete('/:pid', authen, CartController.removeItem);     
 
 module.exports = router;

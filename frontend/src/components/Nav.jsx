@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, ShoppingCart } from "lucide-react";
 import { isAuthenticated, logout } from "../services/userService";
 
 const Nav = () => {
@@ -42,6 +42,13 @@ const Nav = () => {
           {userLoggedIn ? (
             // User đã đăng nhập
             <div className="flex items-center ml-4 space-x-2">
+              <NavLink 
+                to="/cart" 
+                className="flex items-center text-[#2E4A26] hover:text-[#74D978] px-3 py-2 rounded-lg transition"
+              >
+                <ShoppingCart size={18} className="mr-1" />
+                Giỏ hàng
+              </NavLink>
               <NavLink 
                 to="/profile" 
                 className="flex items-center text-[#2E4A26] hover:text-[#74D978] px-3 py-2 rounded-lg transition"
@@ -88,6 +95,14 @@ const Nav = () => {
           {userLoggedIn ? (
             // User đã đăng nhập
             <>
+              <NavLink 
+                to="/cart" 
+                onClick={toggleNavbar} 
+                className="flex items-center text-[#2E4A26] font-bold"
+              >
+                <ShoppingCart size={18} className="mr-2" />
+                Giỏ hàng
+              </NavLink>
               <NavLink 
                 to="/profile" 
                 onClick={toggleNavbar} 

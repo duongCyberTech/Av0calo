@@ -139,104 +139,66 @@ class PromotionsService {
     }
 
     async getAllPromotions(queryParams) {
-        const transaction = await pool.getConnection();
-        await transaction.beginTransaction();
+        const connection = await pool.getConnection();
         try {
             const { search, page, limit, order_id } = queryParams;
             const offset = page && limit ? (Number(page) - 1) * Number(limit) : 0;
-            const today = new Date().toISOString();
-            console.log("today: ", today);
             let params = [];
             
-            if (order_id) {
-                params.push(order_id);
-                params.push(today, today);
-                let query = `
-                    SELECT pr.* 
-                    FROM orders as o
-                    JOIN orders_item as oi ON o.oid = oi.oid
-                    JOIN products as p ON oi.pid = p.pid
-                    JOIN promo_apply_product as pap ON p.pid = pap.pid
-                    JOIN promotions as pr ON pap.promo_id = pr.promo_id
-                    WHERE (o.oid = ? AND pr.start_date <= ? AND pr.expire_date >= ? AND pr.stock > 0`;
-                if (search) {
-                    query += ` AND pr.title LIKE ?`;
-                    params.push(`%${search}%`);
-                }
-
-                query += `) OR (pr.discount_for = 'all' AND pr.start_date <= ? AND pr.expire_date >= ? AND pr.stock > 0)`;
-                params.push(today, today);
-
-                query += ` GROUP BY pr.promo_id `;
-
-                if (limit) {
-                    query += ` LIMIT ? OFFSET ?`;
-                    params.push(Number(limit), Number(offset));
-                }
-
-                const [promos1] = await transaction.query(query, params);
-
-                params = []
-                params.push(today, today);
-                query = `
-                    SELECT * 
-                    FROM promotions 
-                    WHERE start_date <= ? AND expire_date >= ? pr.stock > 0`;
-                
-                if (search) {
-                    query += ` AND title LIKE ?`;
-                    params.push(`%${search}%`);
-                }
-                if (limit) {
-                    query += ` LIMIT ? OFFSET ?`;
-                    params.push(Number(limit), Number(offset));
-                }
-
-                const [promos2] = await transaction.query(query, params);
-
-                const promos = [...promos1, ...promos2];
-                let result = [];
-
-                if (promos && promos.length > 0) {
-                    // Bước 1: Tính toán song song tất cả discount
-                    const computedPromos = await Promise.all(promos.map(async (item) => {
-                        const {discount, totalAmount} = await this.discountValue(transaction, item.promo_id, order_id);
-                        return { ...item, discount: discount || 0, totalAmount: totalAmount || 0 };
-                    }));
-
-                    // Bước 2: Lọc và Sắp xếp trên kết quả đã có
-                    result = computedPromos
-                        .filter(item => item.discount > 0)
-                        .sort((a, b) => b.discount - a.discount); // Sắp xếp giảm dần (Giảm nhiều lên đầu)
-                }
-
-                return { status: 200, data: result };
-            }
-
-            params.push(today, today);
-            let query = `
-                SELECT * 
-                FROM promotions 
-                WHERE start_date <= ? AND expire_date >= ?`;
+            // Explicitly select only columns that exist in the table
+            // Avoid SELECT * to prevent any view/stored procedure issues
+            let query = `SELECT promo_id, title, stock, used, discount_type, discount_num, max_discount, discount_for FROM promotions WHERE stock > 0`;
             
             if (search) {
                 query += ` AND title LIKE ?`;
                 params.push(`%${search}%`);
             }
+            
             if (limit) {
                 query += ` LIMIT ? OFFSET ?`;
                 params.push(Number(limit), Number(offset));
             }
 
-            const [promos] = await transaction.query(query, params);
+            console.log('Executing query:', query);
+            console.log('With params:', params);
+            
+            const [promos] = await connection.query(query, params);
 
-            const result = promos ? promos.sort((a, b) => new Date(b.expire_date) - new Date(a.expire_date)) : [];
+            let result = promos || [];
+            
+            // If order_id is provided, calculate discount for each promotion
+            if (order_id && result.length > 0) {
+                const computedPromos = await Promise.all(result.map(async (item) => {
+                    try {
+                        const {discount, totalAmount} = await this.discountValue(connection, item.promo_id, order_id);
+                        return { ...item, discount: discount || 0, totalAmount: totalAmount || 0 };
+                    } catch (error) {
+                        console.error('Error calculating discount for promo:', item.promo_id, error);
+                        return { ...item, discount: 0, totalAmount: 0 };
+                    }
+                }));
+
+                // Filter and sort by discount amount
+                result = computedPromos
+                    .filter(item => item.discount > 0)
+                    .sort((a, b) => b.discount - a.discount);
+            } else {
+                // Sort by stock (most available first) or by title
+                result = result.sort((a, b) => {
+                    if (b.stock !== a.stock) {
+                        return b.stock - a.stock;
+                    }
+                    return a.title.localeCompare(b.title);
+                });
+            }
+
             return { status: 200, data: result };
         } catch (error) {
-            await transaction.rollback();
+            console.error('Error in getAllPromotions:', error);
+            console.error('Error stack:', error.stack);
             return { status: 500, message: error.message };
         } finally {
-            transaction.release();
+            connection.release();
         }
     }
 }

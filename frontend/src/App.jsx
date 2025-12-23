@@ -15,6 +15,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import OTPForgotPass from "./pages/OTPForgotPass";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
+import CommentAnalysis from "./pages/CommentAnalysis";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
 import ResetSuccess from "./pages/ResetSuccess";
 function App() {
   return (
@@ -36,6 +40,10 @@ function App() {
         <Route path="/reset-success" element={<ResetSuccess />} />
         <Route path="/otp-signup" element={<OtpSignUp />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/comment-analysis" element={<CommentAnalysis />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
         <Route path="/signup-success" element={<SignupSuccess />} />
       </Routes>
     </Router>

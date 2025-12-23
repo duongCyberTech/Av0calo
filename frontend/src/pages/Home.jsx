@@ -23,21 +23,29 @@ const Home = () => {
 
         // Transform data to match frontend structure
         const transformedProducts = productList.map((p) => ({
+        const response = await fetchJSON('/products/all', { method: 'GET' });
+        const productList = Array.isArray(response) ? response : (response.result || []);
+        
+        // Transform data to match frontend structure
+        const transformedProducts = productList.map(p => ({
           pid: p.pid,
           name: p.title,
           price: p.sell_price || p.price || 0,
           rating: p.rating || 0,
           reviews: p.sold ? `${p.sold}+` : "0",
+          reviews: p.sold ? `${p.sold}+` : '0',
           thumbnail: p.thumbnail || null,
           images: p.thumbnail ? [p.thumbnail] : [],
           categoryId: p.cate_id,
           categoryName: p.cate_name,
           stock: p.stock,
+          stock: p.stock
         }));
 
         setProducts(transformedProducts);
       } catch (err) {
         console.error("Error fetching products:", err);
+        console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }
@@ -169,6 +177,72 @@ const Home = () => {
                   </Link>
                 </div>
               </div>
+            <div className="col-span-full text-center text-lg text-gray-600">Đang tải sản phẩm...</div>
+          ) : products.length === 0 ? (
+            <div className="col-span-full text-center text-lg text-gray-600">Chưa có sản phẩm nào</div>
+          ) : (
+            products.map((p) => (
+            <div
+              key={p.pid}
+              className="relative mx-auto mt-28 w-60 cursor-pointer overflow-visible rounded-3xl px-6 pb-6 pt-6 transition-all duration-300 hover:-translate-y-1"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.5)",
+                boxShadow:
+                  "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+              }}
+              onClick={() => navigate(`/product/${p.pid}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") navigate(`/product/${p.pid}`);
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Xem chi tiết ${p.name}`}
+            >
+              <div className="-mt-28 mb-4 flex justify-center">
+                <Link
+                  to={`/product/${p.pid}`}
+                  className="h-44 w-44 overflow-hidden rounded-full p-2.5 shadow-md"
+                  style={{ backgroundColor: "rgba(46,125,50,0.81)" }}
+                >
+                  <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#F9FBF7]">
+                    <img
+                      src={p.thumbnail || p.images?.[0] || placeholderImg}
+                      alt={p.name}
+                      className="h-full w-full object-cover object-center"
+                      onError={(e) => {
+                        e.currentTarget.src = placeholderImg;
+                      }}
+                    />
+                  </div>
+                </Link>
+              </div>
+              <h4 className="mb-2 text-center text-lg font-semibold text-[#237928]">
+                {p.name}
+              </h4>
+              {/* Rating row to match listing cards */}
+              <div className="mb-3 flex items-center justify-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <i
+                    key={i}
+                    className={`fas fa-star text-base ${i < Math.floor(p.rating || 0) ? "text-[#FFB800]" : "text-gray-300"}`}
+                  ></i>
+                ))}
+                <span className="ml-1 text-xs font-medium text-gray-600">
+                  ({p.reviews || "0"})
+                </span>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <span className="rounded-full px-4 py-2 text-sm font-semibold text-[#3D5B2E] shadow-[inset_0_0_0_2px_#4A9F67]">
+                  {(p.price || 0).toLocaleString("vi-VN")}
+                </span>
+                <Link
+                  to={`/product/${p.pid}`}
+                  className="whitespace-nowrap rounded-full bg-[#91EAAF] px-5 py-2 text-sm font-semibold text-black shadow-md transition-colors hover:bg-[#4CAF50] hover:shadow-lg"
+                >
+                  Mua ngay
+                </Link>
+              </div>
+            </div>
             ))
           )}
         </div>

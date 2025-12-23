@@ -38,18 +38,31 @@ class PaymentController {
 
       try {
         if (result.isSuccess) {
-          await connection.query(
-            `UPDATE orders SET is_paid = 1, pay_type = 'online' WHERE oid = ?`,
+          // Kiểm tra xem đơn hàng đã thanh toán chưa để tránh cập nhật nhiều lần
+          const [orderCheck] = await connection.query(
+            `SELECT is_paid FROM orders WHERE oid = ?`,
             [oid]
           );
-          // return res.redirect(`http://localhost:5000/payment/success?oid=${oid}`);
-          return res.send(`
-        <h1 style="color: green; text-align: center; margin-top: 50px;">
-            ✅ THANH TOÁN THÀNH CÔNG!
-        </h1>
-        <p style="text-align: center;">Mã đơn hàng: <b>${oid}</b></p>
-        <p style="text-align: center;">Database đã được cập nhật.</p>
-    `);
+          
+          if (orderCheck.length === 0) {
+            return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
+          }
+          
+          // Chỉ cập nhật nếu chưa thanh toán
+          if (orderCheck[0].is_paid === 0) {
+            await connection.query(
+              `UPDATE orders SET is_paid = 1, pay_type = 'online' WHERE oid = ?`,
+              [oid]
+            );
+          }
+          // res.send(`
+          //     <h1 style="color: green; text-align: center; margin-top: 50px;">
+          //         ✅ THANH TOÁN THÀNH CÔNG!
+          //     </h1>
+          //     <p style="text-align: center;">Mã đơn hàng: <b>${oid}</b></p>
+          //     <p style="text-align: center;">Database đã được cập nhật.</p>
+          // `);
+          return res.redirect(`http://localhost:5174/orders?oid=${oid}&success=true`);
         } else {
           await connection.query(
             `UPDATE orders SET is_paid = 0 WHERE oid = ?`,
