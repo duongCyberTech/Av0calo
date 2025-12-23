@@ -1,12 +1,49 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import Nav from "../components/Nav";
 import placeholderImg from "../assets/product-placeholder.svg";
 import { fetchJSON } from "../utils/api";
 
 const Home = () => {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchJSON('/products/all', { method: 'GET' });
+        const productList = Array.isArray(response) ? response : (response.result || []);
+        
+        // Transform data to match frontend structure
+        const transformedProducts = productList.map(p => ({
+          pid: p.pid,
+          name: p.title,
+          price: p.sell_price || p.price || 0,
+          rating: p.rating || 0,
+          reviews: p.sold ? `${p.sold}+` : '0',
+          thumbnail: p.thumbnail || null,
+          images: p.thumbnail ? [p.thumbnail] : [],
+          categoryId: p.cate_id,
+          categoryName: p.cate_name,
+          stock: p.stock
+        }));
+
+        setProducts(transformedProducts);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   // Hàm xử lý cuộn trang mượt mà
   const scrollToContact = () => {
     const contactSection = document.getElementById("contact-form");
@@ -59,7 +96,12 @@ const Home = () => {
           Sản phẩm từ bơ - Dinh dưỡng xanh, năng lượng sạch
         </h2>
         <div className="grid grid-cols-2 gap-16 gap-y-24 pt-8 md:grid-cols-3 md:gap-20 md:gap-y-28 lg:grid-cols-5 lg:gap-24">
-          {related.map((p) => (
+          {loading ? (
+            <div className="col-span-full text-center text-lg text-gray-600">Đang tải sản phẩm...</div>
+          ) : products.length === 0 ? (
+            <div className="col-span-full text-center text-lg text-gray-600">Chưa có sản phẩm nào</div>
+          ) : (
+            products.map((p) => (
             <div
               key={p.pid}
               className="relative mx-auto mt-28 w-60 cursor-pointer overflow-visible rounded-3xl px-6 pb-6 pt-6 transition-all duration-300 hover:-translate-y-1"
@@ -121,7 +163,8 @@ const Home = () => {
                 </Link>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
