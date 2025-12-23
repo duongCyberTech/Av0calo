@@ -53,7 +53,7 @@ const Subscription = () => {
     <div className="min-h-screen bg-[#F1F8E9] font-sans text-[#266a29]">
       <Header />
 
-      {/* HERO */}
+      {/* ================= HERO ================= */}
       <section className="relative mb-10 min-h-[400px] bg-[url('/src/assets/Subscription1.jpg')] bg-cover bg-center px-10 py-16 text-white">
         <h1 className="mb-6 text-[60px] font-semibold italic text-[#ACF4C5]">
           Subscription Box
