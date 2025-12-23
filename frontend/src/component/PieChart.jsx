@@ -15,12 +15,12 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const classes = ["Đóng gói", "Sản phẩm", "Bơ", "Dầu", "Snack"];
+const classes = ["Đóng gói", "Giao hàng", "Bơ", "Dầu", "Snack"];
 
 // Define colors for each class
 const classColors = {
   'Đóng gói': '#fa938e',
-  'Sản phẩm': '#98bf45',
+  'Giao hàng': '#98bf45',
   'Bơ': '#51cbcf',
   "Dầu": '#d397ff',
   "Snack": '#5999eeff'
@@ -29,7 +29,7 @@ const classColors = {
 // Different opacity based on class
 const opacityMap = {
   'Đóng gói': 0.9,
-  'Sản phẩm': 0.7,
+  'Giao hàng': 0.7,
   'Bơ': 0.5,
   "Dầu": 0.3,
   "Snack": 0.1
@@ -66,15 +66,22 @@ export default function TitanicPie({ data = [] }) {
       if (item.POS && item.POS > 0) {
         result.push({
           Class: item.aspect,
-          Survived: 'Yes',
+          Survived: 'Positive',
           Count: item.POS
         });
       }
       if (item.NEG && item.NEG > 0) {
         result.push({
           Class: item.aspect,
-          Survived: 'No',
+          Survived: 'Negative',
           Count: item.NEG
+        });
+      }
+      if (item.NEU && item.NEU > 0) {
+        result.push({
+          Class: item.aspect,
+          Survived: 'Neural',
+          Count: item.NEU
         });
       }
     });
@@ -99,7 +106,7 @@ export default function TitanicPie({ data = [] }) {
         percentage: totalCount > 0 ? (classTotal / totalCount) * 100 : 0,
         color: classColors[pClass],
       };
-    });
+    }).filter(item => item.percentage > 0);
   }, [titanicData, totalCount]);
 
   // Calculate classSurvivalData
@@ -115,34 +122,43 @@ export default function TitanicPie({ data = [] }) {
           label: item.Survived,
           value: item.Count,
           percentage: classTotal > 0 ? (item.Count / classTotal) * 100 : 0,
-          color: item.Survived === 'Yes' ? baseColor : `${baseColor}80`,
-        }));
+          color: item.Survived === 'Positive' ? baseColor : (item.Survived === 'Neural' ? `${baseColor}80` : `${baseColor}50`),
+        })).filter(item => item.percentage > 0);
     });
   }, [titanicData, classData]);
 
   // Calculate survivalData
   const survivalData = React.useMemo(() => {
     const yesTotal = titanicData
-      .filter((item) => item.Survived === 'Yes')
+      .filter((item) => item.Survived === 'Positive')
       .reduce((sum, item) => sum + item.Count, 0);
     const noTotal = titanicData
-      .filter((item) => item.Survived === 'No')
+      .filter((item) => item.Survived === 'Negative')
       .reduce((sum, item) => sum + item.Count, 0);
-    
+    const neuralTotal = titanicData
+      .filter((item) => item.Survived === 'Neural')
+      .reduce((sum, item) => sum + item.Count, 0);
     return [
       {
-        id: 'Yes',
-        label: 'Survived:',
+        id: 'Positive',
+        label: 'Positive sum:',
         value: yesTotal,
         percentage: totalCount > 0 ? (yesTotal / totalCount) * 100 : 0,
-        color: classColors['Đóng gói'] || '#fa938e',
+        color: classColors['Sản phẩm'] || '#98bf45',
       },
       {
-        id: 'No',
-        label: 'Did not survive:',
+        id: 'Negative',
+        label: 'Negative sum:',
         value: noTotal,
         percentage: totalCount > 0 ? (noTotal / totalCount) * 100 : 0,
-        color: classColors['Sản phẩm'] || '#98bf45',
+        color: classColors['Sản phẩm'] || '#fa938e',
+      },
+      {
+        id: 'Neural',
+        label: 'Neural Sum:',
+        value: neuralTotal,
+        percentage: totalCount > 0 ? (neuralTotal / totalCount) * 100 : 0,
+        color: classColors['Sản phẩm'] || '#e4d61bff',
       },
     ];
   }, [titanicData, totalCount]);
@@ -150,7 +166,7 @@ export default function TitanicPie({ data = [] }) {
   // Calculate survivalClassData
   const survivalClassData = React.useMemo(() => {
     return [...titanicData]
-      .sort((a) => (a.Survived === 'Yes' ? -1 : 1))
+      .sort((a) => (a.Survived === 'Positive' ? -1 : (a.Survived === 'Neural' ? 0 : 1)))
       .map((item) => {
         const baseColor = survivalData.find((d) => d.id === item.Survived)?.color || '#fa938e';
         return {
@@ -158,9 +174,11 @@ export default function TitanicPie({ data = [] }) {
           label: `${item.Class} class:`,
           value: item.Count,
           percentage:
-            (item.Survived === 'Yes'
+            (item.Survived === 'Positive'
               ? (survivalData[0]?.value > 0 ? (item.Count / survivalData[0].value) * 100 : 0)
-              : (survivalData[1]?.value > 0 ? (item.Count / survivalData[1].value) * 100 : 0)),
+              : (item.Survived === 'Negative' ? (survivalData[1]?.value > 0 ? (item.Count / survivalData[1].value) * 100 : 0)
+              : (survivalData[2]?.value > 0 ? (item.Count / survivalData[1].value) * 100 : 0)
+            )),
           color: hexToRgba(baseColor, opacityMap[item.Class] || 1),
         };
       });
@@ -181,7 +199,7 @@ export default function TitanicPie({ data = [] }) {
         exclusive
         onChange={handleViewChange}
       >
-        <ToggleButton value="class">View by Tag</ToggleButton>
+        <ToggleButton value="class">View by Category</ToggleButton>
         <ToggleButton value="survival">View by Sentiment</ToggleButton>
       </ToggleButtonGroup>
       <Box sx={{ display: 'flex', justifyContent: 'center', height: 400 }}>
@@ -219,7 +237,7 @@ export default function TitanicPie({ data = [] }) {
             }}
             hideLegend
           >
-            <PieCenterLabel>Class</PieCenterLabel>
+            <PieCenterLabel>Category</PieCenterLabel>
           </PieChart>
         ) : (
           <PieChart
@@ -259,7 +277,7 @@ export default function TitanicPie({ data = [] }) {
             }}
             hideLegend
           >
-            <PieCenterLabel>Survived</PieCenterLabel>
+            <PieCenterLabel>Sentiment</PieCenterLabel>
           </PieChart>
         )}
       </Box>

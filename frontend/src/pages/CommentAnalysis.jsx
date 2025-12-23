@@ -5,10 +5,11 @@ import TitanicPie from "../component/PieChart";
 import MultipleSelectCheckmarks from "../component/SelectBox";
 import { fetchAnalysis } from "../services/sentimentAnalysis";
 import { Box } from "@mui/material";
+import Footer from "../components/Footer"
 
 export default function CommentAnalysis(){
 
-  const fullAspects = ["Đóng gói", "Sản phẩm", "Bơ", "Dầu", "Snack"]
+  const fullAspects = ["Đóng gói", "Giao hàng", "Bơ", "Dầu", "Snack"]
   const label = "Hạng mục cần phân tích"
   const [dataComments, setComments] = useState([])
   const [aspects, setAspects] = useState([])
@@ -71,6 +72,7 @@ export default function CommentAnalysis(){
           <TitanicPie data={analysisData} />
         </Box>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -62,7 +62,7 @@ class PaymentController {
           //     <p style="text-align: center;">Mã đơn hàng: <b>${oid}</b></p>
           //     <p style="text-align: center;">Database đã được cập nhật.</p>
           // `);
-          return res.redirect(`http://localhost:5174/orders?oid=${oid}&success=true`);
+          return res.redirect(`http://localhost:5173/orders?oid=${oid}&success=true`);
         } else {
           await connection.query(
             `UPDATE orders SET is_paid = 0 WHERE oid = ?`,
