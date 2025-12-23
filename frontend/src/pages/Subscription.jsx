@@ -1,12 +1,53 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import placeholderImg from "../assets/product-placeholder.svg";
-import { fetchJSON } from "../utils/api";
+import { useNavigate } from "react-router-dom";
+import { getAllSubscriptions } from "../services/subscriptionService";
 
 const Subscription = () => {
+  const navigate = useNavigate();
   const processRef = useRef(null);
   const packageRef = useRef(null);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchSubscriptions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getAllSubscriptions();
+        setSubscriptions(data || []);
+      } catch (err) {
+        console.error("Error fetching subscriptions:", err);
+        setError(err.body?.message || "Không thể tải danh sách gói đăng ký");
+        // Nếu lỗi do chưa đăng nhập, vẫn hiển thị trang nhưng không có packages
+        if (err.status === 401) {
+          setError("Vui lòng đăng nhập để xem các gói đăng ký");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptions();
+  }, []);
+
+  const handleSubscribe = (subscription) => {
+    navigate("/subscription-cart", {
+      state: {
+        subscription: {
+          id: subscription.sub_id,
+          sub_id: subscription.sub_id,
+          name: subscription.title,
+          price: subscription.price,
+          billing_cycle: subscription.duration,
+          description: subscription.description,
+        },
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#F1F8E9] font-sans text-[#266a29]">
@@ -127,62 +168,68 @@ const Subscription = () => {
         </div>
       </section>
 
-      {/* ================= PACKAGES ================= */}
+      {/* PACKAGES */}
       <section ref={packageRef} className="scroll-mt-32 px-6 py-12">
-        <h3 className="mb-2 text-center text-[48px] font-semibold">
+        <h3 className="mb-10 text-center text-[48px] font-semibold">
           Chọn Gói Phù Hợp Với Bạn
         </h3>
-        <p className="mb-10 text-center text-[40px] font-light">
-          Bắt đầu hành trình sống xanh ngay hôm nay.
-        </p>
 
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-10 md:grid-cols-2">
-          {/* Cá nhân */}
-          <div className="rounded-3xl bg-white p-8 shadow">
-            <div className="mb-6 flex items-center justify-between">
-              <h4 className="text-[40px] font-bold">Gói Cá Nhân</h4>
-              <div className="text-right">
-                <span className="block text-[64px] font-bold text-red-500">
-                  3.999k
-                </span>
-                <span className="block text-[40px]">/năm</span>
-              </div>
-            </div>
-
-            <ul className="mb-10 space-y-2 text-[32px] font-light">
-              <li>• 4 sản phẩm bơ</li>
-              <li>• Tư vấn dinh dưỡng</li>
-              <li>• Miễn phí vận chuyển</li>
-            </ul>
-
-            <button className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white transition hover:-translate-y-1 hover:bg-[#237928]">
-              Đăng Ký Ngay
-            </button>
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="text-[32px] text-[#266a29]">Đang tải...</div>
           </div>
-
-          {/* Gia đình */}
-          <div className="rounded-3xl bg-white p-8 shadow">
-            <div className="mb-6 flex items-center justify-between">
-              <h4 className="text-[40px] font-bold">Gói Gia Đình</h4>
-              <div className="text-right">
-                <span className="block text-[64px] font-bold text-red-500">
-                  6.999k
-                </span>
-                <span className="block text-[40px]">/năm</span>
-              </div>
-            </div>
-
-            <ul className="mb-10 space-y-2 text-[32px] font-light">
-              <li>• 6 sản phẩm bơ</li>
-              <li>• Hỗ trợ ưu tiên</li>
-              <li>• Miễn phí vận chuyển</li>
-            </ul>
-
-            <button className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white hover:bg-[#237928]">
-              Đăng Ký Ngay
-            </button>
+        ) : error ? (
+          <div className="mx-auto max-w-7xl rounded-3xl bg-red-50 p-8 text-center">
+            <p className="text-[32px] text-red-600">{error}</p>
+            {error.includes("đăng nhập") && (
+              <button
+                onClick={() => navigate("/login")}
+                className="mt-4 rounded-[30px] bg-[#237928] px-8 py-4 text-[28px] text-white hover:bg-[#1a5d1e]"
+              >
+                Đăng Nhập
+              </button>
+            )}
           </div>
-        </div>
+        ) : subscriptions.length === 0 ? (
+          <div className="mx-auto max-w-7xl rounded-3xl bg-yellow-50 p-8 text-center">
+            <p className="text-[32px] text-yellow-600">
+              Hiện tại chưa có gói đăng ký nào
+            </p>
+          </div>
+        ) : (
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-10 md:grid-cols-2">
+            {subscriptions.map((subscription) => (
+              <div key={subscription.sub_id} className="rounded-3xl bg-white p-8 shadow">
+                <h4 className="mb-4 text-[40px] font-bold">{subscription.title}</h4>
+                {subscription.description && (
+                  <p className="mb-4 text-[28px] font-light text-gray-600">
+                    {subscription.description}
+                  </p>
+                )}
+                <p className="mb-2 text-[24px] font-light text-gray-500">
+                  Chu kỳ:{" "}
+                  {subscription.duration === "yearly"
+                    ? "Hàng năm"
+                    : subscription.duration === "monthly"
+                    ? "Hàng tháng"
+                    : subscription.duration === "weekly"
+                    ? "Hàng tuần"
+                    : subscription.duration}
+                </p>
+                <p className="mb-6 text-[32px] font-semibold text-[#237928]">
+                  {subscription.price.toLocaleString("vi-VN")} VNĐ
+                </p>
+
+                <button
+                  onClick={() => handleSubscribe(subscription)}
+                  className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white hover:bg-[#237928]"
+                >
+                  Đăng Ký Ngay
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
