@@ -8,7 +8,9 @@ import { isAuthenticated } from "../services/userService";
 const SubscriptionCart = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [subscription, setSubscription] = useState(location.state?.subscription);
+  const [subscription, setSubscription] = useState(
+    location.state?.subscription,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [subscriptionDetails, setSubscriptionDetails] = useState(null);
@@ -29,20 +31,22 @@ const SubscriptionCart = () => {
         setError(null);
         const details = await getSubscriptionById(subscription.sub_id);
         setSubscriptionDetails(details);
-        
+
         // Cập nhật subscription với thông tin từ API nếu cần
         if (details) {
-          setSubscription(prev => ({
+          setSubscription((prev) => ({
             ...prev,
             title: details.title,
             description: details.description,
             products: details.products,
-            promotions: details.promotions
+            promotions: details.promotions,
           }));
         }
       } catch (err) {
         console.error("Error fetching subscription details:", err);
-        setError(err.body?.message || "Không thể tải thông tin chi tiết gói đăng ký");
+        setError(
+          err.body?.message || "Không thể tải thông tin chi tiết gói đăng ký",
+        );
       } finally {
         setLoading(false);
       }
@@ -182,7 +186,20 @@ const SubscriptionCart = () => {
 
             {/* Nút đặt hàng */}
             <button
-              onClick={() => navigate("/subscription-checkout", { state: { subscription } })}
+              onClick={() => {
+                try {
+                  sessionStorage.setItem(
+                    "subscription_checkout",
+                    JSON.stringify(subscription),
+                  );
+                } catch (e) {
+                  console.warn(
+                    "Unable to persist subscription to sessionStorage",
+                    e,
+                  );
+                }
+                navigate("/subscription-checkout", { state: { subscription } });
+              }}
               className="mt-10 w-full rounded-2xl bg-[#98E9B1] py-4 text-[28px] font-bold tracking-widest text-[#2E4A26] shadow-md transition hover:bg-[#85da9f]"
             >
               ĐẶT HÀNG

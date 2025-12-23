@@ -38,7 +38,7 @@ const SubSuccess = () => {
             </p>
           </div>
           <button
-            onClick={() => navigate("/home", { state: { email } })}
+            onClick={() => navigate("/", { state: { email } })}
             className="w-full rounded-[15px] bg-[#91EAAF] px-4 py-3 text-[22px] font-bold text-[#237928] transition-all hover:-translate-y-1 hover:bg-[#4CAF50]"
           >
             TIẾP TỤC
