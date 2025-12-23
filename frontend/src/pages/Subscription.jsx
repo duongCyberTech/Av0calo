@@ -1,18 +1,26 @@
 import React, { useRef } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import placeholderImg from "../assets/product-placeholder.svg";
-import { fetchJSON } from "../utils/api";
+import { useNavigate } from "react-router-dom";
 
 const Subscription = () => {
+  const navigate = useNavigate();
   const processRef = useRef(null);
   const packageRef = useRef(null);
+
+  const handleSubscribe = (subscription) => {
+    navigate("/subscription-cart", {
+      state: {
+        subscription,
+      },
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#F1F8E9] font-sans text-[#266a29]">
       <Header />
 
-      {/* ================= HERO ================= */}
+      {/* HERO */}
       <section className="relative mb-10 min-h-[400px] bg-[url('/src/assets/Subscription1.jpg')] bg-cover bg-center px-10 py-16 text-white">
         <h1 className="mb-6 text-[60px] font-semibold italic text-[#ACF4C5]">
           Subscription Box
@@ -127,58 +135,49 @@ const Subscription = () => {
         </div>
       </section>
 
-      {/* ================= PACKAGES ================= */}
+      {/* PACKAGES */}
       <section ref={packageRef} className="scroll-mt-32 px-6 py-12">
-        <h3 className="mb-2 text-center text-[48px] font-semibold">
+        <h3 className="mb-10 text-center text-[48px] font-semibold">
           Chọn Gói Phù Hợp Với Bạn
         </h3>
-        <p className="mb-10 text-center text-[40px] font-light">
-          Bắt đầu hành trình sống xanh ngay hôm nay.
-        </p>
 
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-10 md:grid-cols-2">
           {/* Cá nhân */}
           <div className="rounded-3xl bg-white p-8 shadow">
-            <div className="mb-6 flex items-center justify-between">
-              <h4 className="text-[40px] font-bold">Gói Cá Nhân</h4>
-              <div className="text-right">
-                <span className="block text-[64px] font-bold text-red-500">
-                  3.999k
-                </span>
-                <span className="block text-[40px]">/năm</span>
-              </div>
-            </div>
+            <h4 className="mb-4 text-[40px] font-bold">Gói Cá Nhân</h4>
+            <p className="mb-6 text-[32px] font-light">4 sản phẩm bơ / năm</p>
 
-            <ul className="mb-10 space-y-2 text-[32px] font-light">
-              <li>• 4 sản phẩm bơ</li>
-              <li>• Tư vấn dinh dưỡng</li>
-              <li>• Miễn phí vận chuyển</li>
-            </ul>
-
-            <button className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white transition hover:-translate-y-1 hover:bg-[#237928]">
+            <button
+              onClick={() =>
+                handleSubscribe({
+                  id: "personal",
+                  name: "Gói Cá Nhân",
+                  price: 3999000,
+                  billing_cycle: "yearly",
+                })
+              }
+              className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white hover:bg-[#237928]"
+            >
               Đăng Ký Ngay
             </button>
           </div>
 
           {/* Gia đình */}
           <div className="rounded-3xl bg-white p-8 shadow">
-            <div className="mb-6 flex items-center justify-between">
-              <h4 className="text-[40px] font-bold">Gói Gia Đình</h4>
-              <div className="text-right">
-                <span className="block text-[64px] font-bold text-red-500">
-                  6.999k
-                </span>
-                <span className="block text-[40px]">/năm</span>
-              </div>
-            </div>
+            <h4 className="mb-4 text-[40px] font-bold">Gói Gia Đình</h4>
+            <p className="mb-6 text-[32px] font-light">6 sản phẩm bơ / năm</p>
 
-            <ul className="mb-10 space-y-2 text-[32px] font-light">
-              <li>• 6 sản phẩm bơ</li>
-              <li>• Hỗ trợ ưu tiên</li>
-              <li>• Miễn phí vận chuyển</li>
-            </ul>
-
-            <button className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white hover:bg-[#237928]">
+            <button
+              onClick={() =>
+                handleSubscribe({
+                  id: "family",
+                  name: "Gói Gia Đình",
+                  price: 6999000,
+                  billing_cycle: "yearly",
+                })
+              }
+              className="w-full rounded-[40px] bg-[#237928]/65 py-4 text-[40px] text-white hover:bg-[#237928]"
+            >
               Đăng Ký Ngay
             </button>
           </div>
