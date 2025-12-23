@@ -24,6 +24,7 @@ export default function BarsDataset({data}) {
         series={[
           { dataKey: 'POS', label: 'positive', valueFormatter },
           { dataKey: 'NEG', label: 'negative', valueFormatter },
+          { dataKey: 'NEU', label: 'neural', valueFormatter },
         ]}
         {...chartSetting}
       />

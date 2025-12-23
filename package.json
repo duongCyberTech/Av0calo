@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "fe": "cd frontend && npm run dev",
+    "fe": "cd frontend && npm install --force && npm run dev",
     "nlp": "cd backend && cd sentiment-analysis && python -m venv venv && .\\venv\\Scripts\\activate && pip install -r requirements.txt && python app.py",
-    "be": "cd backend && npm run start",
+    "be": "cd backend && npm install --force && npm run start",
     "all": "npm-run-all --parallel fe be"
   },
   "keywords": [],

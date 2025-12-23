@@ -15,6 +15,48 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+class Product(db.Model):
+    __tablename__ = 'products'
+
+    # 1. Khóa chính
+    pid = db.Column(db.String(255), primary_key=True)
+
+    # 2. Các cột cơ bản
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    stock = db.Column(db.Integer, nullable=False)
+    sold = db.Column(db.Integer, nullable=False)
+
+    # 3. Kiểu tiền tệ/số thực (Decimal)
+    # decimal(12,2) -> Numeric(12, 2)
+    cost = db.Column(db.Numeric(12, 2), nullable=False)
+    sell_price = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    # decimal(3,1) default(0.0)
+    rating = db.Column(db.Numeric(3, 1), default=0.0)
+    
+    # decimal(6,2)
+    size = db.Column(db.Numeric(6, 2), nullable=False)
+
+    # 4. Kiểu Enum ('ml', 'g')
+    # Cần đặt tên (name='...') để hỗ trợ các DB như PostgreSQL
+    unit = db.Column(db.Enum('ml', 'g', name='product_unit_enum'), nullable=False)
+
+    # 5. Khóa ngoại
+    cate_id = db.Column(db.String(255), db.ForeignKey('categories.cate_id'), nullable=False)
+
+    # 6. Cột thêm vào sau (ALTER TABLE)
+    # default=False xử lý phía Python, server_default xử lý phía DB
+    deleted = db.Column(db.Boolean, default=False, server_default='0')
+
+    # ---------------------------------------------------------
+    # Tùy chọn: Tạo relationship để join dễ dàng với bảng Category
+    # (Yêu cầu phải có class Category định nghĩa trước hoặc dùng string)
+    # category = relationship("Category", back_populates="products")
+    
+    def __repr__(self):
+        return f"<Product(pid='{self.pid}', title='{self.title}')>"
+
 class Review(db.Model):
     __tablename__ = 'review'
 
@@ -39,7 +81,7 @@ class Review(db.Model):
     # --- Optional: Thiết lập quan hệ để dễ truy vấn ---
     # Ví dụ: review.user.name hoặc review.product.name
     # user = db.relationship('User', backref=db.backref('reviews', lazy=True))
-    # product = db.relationship('Product', backref=db.backref('reviews', lazy=True))
+    product = db.relationship('Product', backref=db.backref('reviews', lazy=True))
 
     def __repr__(self):
         return f'<Review User:{self.uid} Product:{self.pid} Rate:{self.rate}>'
@@ -62,8 +104,8 @@ def analyze():
         comments = data['comments']
         print("Comments: ", comments)
         aspects = data.get('aspects', DEFAULT_ASPECTS) # Cho phép client tùy chỉnh aspect
-        db_comments = Review.query.with_entities(Review.content).all()
-        comments.extend([comment.content for comment in db_comments])
+        db_comments = results = db.session.query(Review.content, Product.title).join(Product).all()
+        comments.extend([comment.title + comment.content for comment in db_comments])
         if not comments or not len(comments):
             return jsonify({'error': 'No comment provided'}), 400
 
