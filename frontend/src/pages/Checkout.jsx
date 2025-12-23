@@ -375,7 +375,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="bg-[#F9FBF7] min-h-screen font-['Quicksand']">
+    <div className="bg-[#F9FBF7] min-h-screen">
       <Header />
       <div className="pt-24 pb-16 max-w-6xl mx-auto px-4">
         <div className="flex items-center gap-4 mb-8">

@@ -5,7 +5,7 @@ import ProductDetail from "./pages/ProductDetail";
 import WriteReview from "./pages/WriteReview";
 import Subscription from "./pages/Subscription";
 import SubscriptionCart from "./pages/SubscriptionCart";
-import Checkout from "./pages/SubscriptionCheckout";
+import SubscriptionCheckout from "./pages/SubscriptionCheckout";
 import SubSuccess from "./pages/SubSuccess";
 import Signup from "./pages/Signup";
 import OtpSignUp from "./pages/OtpSignUp";
@@ -30,7 +30,7 @@ function App() {
         <Route path="/product/:pid/review" element={<WriteReview />} />
         <Route path="/subscription" element={<Subscription />} />
         <Route path="/subscription-cart" element={<SubscriptionCart />} />
-        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
         <Route path="/subsuccess" element={<SubSuccess />} />
         <Route path="/register" element={<Signup />} />
         <Route path="/login" element={<Signin />} />

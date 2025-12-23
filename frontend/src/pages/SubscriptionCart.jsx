@@ -1,13 +1,55 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { getSubscriptionById } from "../services/subscriptionService";
+import { isAuthenticated } from "../services/userService";
 
 const SubscriptionCart = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [subscription, setSubscription] = useState(location.state?.subscription);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [subscriptionDetails, setSubscriptionDetails] = useState(null);
 
-  const subscription = location.state?.subscription;
+  // Nếu có sub_id, gọi API để lấy thông tin chi tiết
+  useEffect(() => {
+    const fetchSubscriptionDetails = async () => {
+      if (!subscription?.sub_id) return;
+
+      // Kiểm tra đăng nhập
+      if (!isAuthenticated()) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const details = await getSubscriptionById(subscription.sub_id);
+        setSubscriptionDetails(details);
+        
+        // Cập nhật subscription với thông tin từ API nếu cần
+        if (details) {
+          setSubscription(prev => ({
+            ...prev,
+            title: details.title,
+            description: details.description,
+            products: details.products,
+            promotions: details.promotions
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching subscription details:", err);
+        setError(err.body?.message || "Không thể tải thông tin chi tiết gói đăng ký");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptionDetails();
+  }, [subscription?.sub_id, navigate]);
 
   if (!subscription) {
     return (
@@ -19,6 +61,14 @@ const SubscriptionCart = () => {
         >
           Quay lại chọn gói
         </button>
+      </div>
+    );
+  }
+
+  if (loading && !subscriptionDetails) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-[#F1F8E9]">
+        <div className="text-[32px] text-[#266a29]">Đang tải thông tin...</div>
       </div>
     );
   }
@@ -45,6 +95,13 @@ const SubscriptionCart = () => {
         {/* Title */}
         <h1 className="mb-10 text-[56px] font-bold">Giỏ hàng</h1>
 
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-50 p-4 text-center text-[24px] text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* Table Header */}
         <div className="grid grid-cols-12 items-center rounded-lg bg-[#98E9B1] px-8 py-4 text-center text-[28px] font-semibold">
           <div className="col-span-5 text-left">Sản phẩm</div>
@@ -62,14 +119,21 @@ const SubscriptionCart = () => {
                 alt="Product"
                 className="h-32 w-48 rounded-md object-cover shadow-sm"
               />
-              <span className="text-[36px] font-bold leading-tight">
-                Subscription Box
-              </span>
+              <div className="flex flex-col">
+                <span className="text-[36px] font-bold leading-tight">
+                  Subscription Box
+                </span>
+                {subscription.description && (
+                  <span className="mt-2 text-[20px] font-light text-gray-600">
+                    {subscription.description}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Loại gói */}
             <div className="col-span-3 text-center text-[26px]">
-              {subscription.name}
+              {subscription.name || subscription.title}
             </div>
 
             {/* Số tiền và Checkbox */}
@@ -118,7 +182,7 @@ const SubscriptionCart = () => {
 
             {/* Nút đặt hàng */}
             <button
-              onClick={() => navigate("/checkout", { state: { subscription } })}
+              onClick={() => navigate("/subscription-checkout", { state: { subscription } })}
               className="mt-10 w-full rounded-2xl bg-[#98E9B1] py-4 text-[28px] font-bold tracking-widest text-[#2E4A26] shadow-md transition hover:bg-[#85da9f]"
             >
               ĐẶT HÀNG
