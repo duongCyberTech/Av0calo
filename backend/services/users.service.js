@@ -59,15 +59,18 @@ class UserService {
   }
 
   async getAllUsers() {
-    try {
-      const [users] = await pool.query(
-        `SELECT uid, fname, lname, username, email, phone, role, status FROM users`
-      );
-      return users;
-    } catch (error) {
-      throw new Error(error.message);
-    }
+  try {
+    const [users] = await pool.query(
+      `SELECT uid, fname, lname, username, email, phone, role, status 
+       FROM users 
+       WHERE role = 'customer'`
+    );
+    return users;
+  } catch (error) {
+    throw new Error(error.message);
   }
+}
+
   async getUserById(uid) {
     try {
       const [user] = await pool.query(
@@ -115,5 +118,17 @@ class UserService {
       throw new Error(error.message);
     }
   }
+  async updateStatus(id, status) {
+    try {
+      const [result] = await pool.query(
+        `UPDATE users SET status = ? WHERE uid = ?`,
+        [status, id]
+      );
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
 }
 module.exports = new UserService();

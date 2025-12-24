@@ -20,6 +20,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import ResetSuccess from "./pages/ResetSuccess";
+import AdminPanel from "./pages/AdminPanel";
 function App() {
   return (
     <Router>
@@ -45,6 +46,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/signup-success" element={<SignupSuccess />} />
+        <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     </Router>
   );

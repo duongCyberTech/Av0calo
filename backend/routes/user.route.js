@@ -8,5 +8,5 @@ router.get("/", authen, authorize(["admin"]), UserController.getAllUsers);
 router.get("/:id", authen, UserController.getUserById);
 router.put("/:id", authen, UserController.updateUser);
 router.delete("/:id", authen, authorize(["admin"]), UserController.deleteUser);
-
+router.patch("/:id/status", authen, authorize(["admin"]), UserController.changeStatus);
 module.exports = router;
