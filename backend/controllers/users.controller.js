@@ -66,6 +66,27 @@ class UserController {
       return res.status(500).json({ message: error.message });
     }
   }
-}
+  async changeStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body; 
+      if (status === undefined || status === null) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      const statusValue = status ? 1 : 0;
 
+      const updated = await UserService.updateStatus(id, statusValue);
+      
+      if (!updated) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      return res.status(200).json({ 
+        message: `User has been ${statusValue ? 'activated' : 'deactivated'}` 
+      });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  }
+}
 module.exports = new UserController();

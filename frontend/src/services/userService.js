@@ -67,3 +67,55 @@ export const isAuthenticated = () => {
 export const logout = () => {
     localStorage.removeItem('token');
 };
+export const createNewUser = async (userData) => {
+    try {
+        const headers = getAuthHeaders();
+        return await fetchJSON('/users', {
+            method: 'POST',
+            headers,
+            body: userData
+        });
+    } catch (error) {
+        console.error('Error creating user:', error);
+        throw error;
+    }
+};
+
+// 3. Xóa người dùng
+export const deleteUser = async (userId) => {
+    try {
+        const headers = getAuthHeaders();
+        return await fetchJSON(`/users/${userId}`, {
+            method: 'DELETE',
+            headers
+        });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        throw error;
+    }
+};
+export const getAllUsers = async () => {
+    try {
+        const headers = getAuthHeaders();
+        return await fetchJSON('/users', {
+            method: 'GET',
+            headers
+        });
+    } catch (error) {
+        console.error('Error fetching all users:', error);
+        throw error;
+    }
+};
+export const updateUserStatus = async (userId, status) => {
+    try {
+        const headers = getAuthHeaders();
+        return await fetchJSON(`/users/${userId}/status`, {
+            method: 'PATCH',
+            headers,
+            body: { status: status ? 1 : 0 }
+        });
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        throw error;
+    }
+};
