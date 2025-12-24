@@ -72,10 +72,12 @@ const AdminPanel = () => {
 
   // --- VIEW 1: TRANG TỔNG QUAN ---
   const DashboardBI = () => {
-    const top5 = [...MOCK_PRODUCTS].sort((a, b) => b.sold - a.sold).slice(0, 5);
-    const maxVal = 200; // Cố định mốc trục tung cao nhất là 500
+    // Dữ liệu giả định (nếu chưa có biến global)
+    const top5 = typeof MOCK_PRODUCTS !== 'undefined' ? [...MOCK_PRODUCTS].sort((a, b) => b.sold - a.sold).slice(0, 5) : [];
+    const maxVal = 200; 
     const yAxisTicks = [200, 160, 120, 80, 40, 0];
-
+    const chartData = typeof GROWTH_CHART !== 'undefined' ? GROWTH_CHART : [];
+ 
     return (
       <div className="animate-fadeIn space-y-12">
         {/* Chỉ số nhanh */}
@@ -98,14 +100,14 @@ const AdminPanel = () => {
             <h3 className="text-4xl font-black mt-2">+120</h3>
           </div>
         </div>
-
+ 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* BIỂU ĐỒ CÓ TRỤC TUNG (Y-AXIS) */}
           <div className="bg-white p-12 rounded-[50px] shadow-sm border border-green-50 lg:col-span-2">
             <h3 className="text-2xl font-black text-[#266A29] mb-12">Tăng trưởng khách hàng</h3>
             <div className="flex h-72">
-              {/* Trục tung */}
-              <div className="flex flex-col justify-between text-[10px] font-bold text-gray-400 pr-4 pb-8 border-r border-gray-100">
+              {/* Trục tung - Đậm hơn một chút để dễ đọc */}
+              <div className="flex flex-col justify-between text-[10px] font-bold text-gray-500 pr-4 pb-8 border-r border-gray-200">
                 {yAxisTicks.map(tick => <span key={tick}>{tick}</span>)}
               </div>
               
@@ -113,28 +115,30 @@ const AdminPanel = () => {
               <div className="flex-1 flex items-end justify-between px-6 relative h-full">
                 {/* Các đường kẻ ngang (Grid lines) */}
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-6">
-                  {yAxisTicks.map(tick => <div key={tick} className="w-full border-t border-gray-50 h-0"></div>)}
+                  {yAxisTicks.map(tick => <div key={tick} className="w-full border-t border-dashed border-gray-200 h-0"></div>)}
                 </div>
-
-                {/* Các cột dữ liệu */}
-                {GROWTH_CHART.map((d, i) => (
+ 
+                {/* Các cột dữ liệu - ĐÃ ĐỔI MÀU ĐẬM HƠN TẠI ĐÂY */}
+                {chartData.map((d, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center group h-full justify-end z-10">
                     <div 
-                      className="w-3/5 bg-[#F1F8E9] group-hover:bg-[#266A29] rounded-t-xl transition-all duration-500 relative cursor-pointer" 
+                      className="w-3/5 bg-[#43A047] group-hover:bg-[#1B5E20] rounded-t-lg transition-all duration-300 relative cursor-pointer shadow-sm" 
                       style={{ height: `${(d.val / maxVal) * 100}%` }}
                     >
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 whitespace-nowrap z-20 font-black shadow-xl">
+                      {/* Tooltip */}
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#1B5E20] text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap z-20 font-black shadow-xl transition-opacity">
                         {d.val} khách
                       </div>
                     </div>
-                    <span className="text-[9px] text-gray-400 mt-4 font-black">{d.month}</span>
+                    {/* Chữ bên dưới đậm hơn (gray-600 thay vì gray-400) */}
+                    <span className="text-[10px] text-gray-600 mt-4 font-black group-hover:text-[#1B5E20] transition-colors">{d.month}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
-          {/* BÁN CHẠY NHẤT (TOP SELLERS) TỐI ƯU */}
+ 
+          {/* BÁN CHẠY NHẤT (TOP SELLERS) */}
           <div className="bg-white p-12 rounded-[60px] shadow-sm border border-green-50">
             <h3 className="text-2xl font-black text-[#266A29] mb-10 tracking-tight flex items-center gap-3">
               <i className="fas fa-crown text-yellow-500"></i> Sản phẩm HOT
@@ -152,18 +156,18 @@ const AdminPanel = () => {
                         {i + 1}
                       </div>
                       <div>
-                        <h4 className="text-sm font-black text-[#266A29] group-hover:text-green-600 transition-colors line-clamp-1">{p.name}</h4>
+                        <h4 className="text-sm font-black text-[#266A29] group-hover:text-green-800 transition-colors line-clamp-1">{p.name}</h4>
                         <p className="text-[9px] text-gray-400 font-bold uppercase">{p.category}</p>
                       </div>
                     </div>
                     <span className="text-sm font-black text-[#266A29]">{p.sold.toLocaleString()}</span>
                   </div>
-                  {/* Thanh tiến độ thiết kế mới */}
-                  <div className="w-full h-2 bg-gray-50 rounded-full overflow-hidden p-[2px]">
-                     <div 
-                        className="h-full rounded-full bg-gradient-to-r from-[#91EAAF] to-[#266A29] transition-all duration-1000 ease-out" 
+                  {/* Thanh tiến độ - Đậm hơn */}
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden p-[2px]">
+                      <div 
+                        className="h-full rounded-full bg-[#43A047] group-hover:bg-[#1B5E20] transition-all duration-1000 ease-out" 
                         style={{width: `${(p.sold / top5[0].sold) * 100}%`}}
-                     ></div>
+                      ></div>
                   </div>
                 </div>
               ))}
