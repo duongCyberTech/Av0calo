@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 1. Server A (Image a:v1)
+  avo-server:
+    image: avo-server:v1.0
+    container_name: avo-server
+    restart: always
+    ports:
+      - "3000:3000"  # Truy cập server A qua: http://localhost:5001
+    networks:
+      - my-app-net
+
+  # 2. Server B (Image b:v0.2)
+  sa-server:
+    image: sa:v1.0
+    container_name: sa
+    restart: always
+    ports:
+      - "5000:5000"  # Truy cập server B qua: http://localhost:5002
+    networks:
+      - my-app-net
+
+  # 3. Frontend (Chạy trên port 5173)
+  frontend:
+    image: ui:v1.0 # <-- Thay tên image thực tế của bạn vào đây
+    container_name: ui
+    restart: always
+    ports:
+      - "5173:80"  # Truy cập Web qua: http://localhost:5173
+    networks:
+      - my-app-net
+    depends_on:
+      - avo-server
+      - sa-server
+    environment:
+      HOST_NAME: localhost
+
+networks:
+  my-app-net:
+    driver: bridge

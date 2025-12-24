@@ -21,6 +21,7 @@ import {
 } from "../services/addressService";
 import { getPromotions } from "../services/promotionService";
 import { fetchJSON } from "../utils/api";
+import axios from 'axios'
 
 const SubscriptionCheckout = () => {
   const navigate = useNavigate();
@@ -142,10 +143,20 @@ const SubscriptionCheckout = () => {
         sub_id: subscription.id, // ID của gói đăng ký
       };
 
+      const subPay = await axios.post(
+        `http://localhost:3000/subcriptions/pay/${regData.sub_id}`,{},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+
+      window.location.href = subPay.data.url
       // logic tạo đăng ký ở đây...
       // await createSubscriptionOrder(regData);
 
-      navigate("/SubSuccess");
+      //navigate("/SubSuccess");
     } catch (err) {
       alert("Lỗi khi đăng ký gói");
     } finally {

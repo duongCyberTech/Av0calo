@@ -73,7 +73,7 @@ class SubcriptionService {
 
             console.log(price)
             
-            const trans = await PaymentService.createTransaction(`${uid}_${sub_id}`, price, bankCode)
+            const trans = await PaymentService.createTransaction(`${uid}_${sub_id}_signsubcription`, price, bankCode)
             return {status: 200, url: trans}
         } catch (error) {
             throw new Error(error.message)
@@ -87,7 +87,7 @@ class SubcriptionService {
             const today = new Date().toISOString()
             const isSubcribed = await transaction.query(`
                 SELECT customer_id from subcribe
-                WHERE customer_id = ? AND sub_id = ? AND expire_at < ?`,
+                WHERE customer_id = ? AND sub_id LIKE ? AND expire_at < ?`,
             [uid, sub_id, today])
 
             if (isSubcribed[0].length > 0) throw new Error("You have already subcribed this package!")

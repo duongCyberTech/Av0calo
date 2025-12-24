@@ -1,6 +1,7 @@
 const PaymentService = require('../services/payment.service');
 const pool = require('../config/db');
 const qs = require('qs');
+const SubcriptionService = require('../services/subcriptions.service')
 class PaymentController {
   async createUrl(req, res) {
     try {
@@ -29,6 +30,20 @@ class PaymentController {
     try {
       const vnp_Params = req.query;
       const result = await PaymentService.verifyReturn(vnp_Params);
+      if (vnp_Params.vnp_TxnRef.includes("signsubcription")) {
+        const idList = vnp_Params.vnp_TxnRef.split("_")
+        const idxsub = idList.indexOf("signsubcription")
+        let sub_id = ""
+        for (let i = 1; i < idxsub; i++) {
+          sub_id = (i == 1 ? idList[i] : sub_id + "_" + idList[i]) 
+        }
+
+        console.log("sub: ", sub_id)
+
+        const reg = await SubcriptionService.registerSubcription(idList[0], sub_id)
+
+        return res.redirect(`http://localhost:5173/subsuccess?success=true&osr=${sub_id}`)
+      }
       const connection = await pool.getConnection();
       const oid = result.oid;
 
@@ -79,6 +94,7 @@ class PaymentController {
         connection.release();
       }
     } catch (error) {
+      console.log(error.message)
       return res.status(500).json({ message: 'Lỗi server' });
     }
   }
